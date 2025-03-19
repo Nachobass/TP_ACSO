@@ -4,58 +4,76 @@
 #include "shell.h"  // nose si se puede
 
 
-void update_flags(uint64_t result) {
-    // Z: Zero flag
-    if (result == 0) {
-        CURRENT_STATE.FLAGS.Z = 1;
-    } else {
-        CURRENT_STATE.FLAGS.Z = 0;
-    }
+// void update_flags(uint64_t result) {
+//     // Z: Zero flag
+//     if (result == 0) {
+//         CURRENT_STATE.FLAGS.Z = 1;
+//     } else {
+//         CURRENT_STATE.FLAGS.Z = 0;
+//     }
 
-    // N: Negative flag
-    if (result < 0) {
-        CURRENT_STATE.FLAGS.N = 1;
-    } else {
-        CURRENT_STATE.FLAGS.N = 0;
-    }
+//     // N: Negative flag
+//     if (result < 0) {
+//         CURRENT_STATE.FLAGS.N = 1;
+//     } else {
+//         CURRENT_STATE.FLAGS.N = 0;
+//     }
 
-    // C: Carry flag
-    if (result < 0) {
-        CURRENT_STATE.FLAGS.C = 1;
-    } else {
-        CURRENT_STATE.FLAGS.C = 0;
-    }
+//     // C: Carry flag
+//     if (result < 0) {
+//         CURRENT_STATE.FLAGS.C = 1;
+//     } else {
+//         CURRENT_STATE.FLAGS.C = 0;
+//     }
 
-    // V: Overflow flag
-    if (result < 0) {
-        CURRENT_STATE.FLAGS.V = 1;
-    } else {
-        CURRENT_STATE.FLAGS.V = 0;
-    }
+//     // V: Overflow flag
+//     if (result < 0) {
+//         CURRENT_STATE.FLAGS.V = 1;
+//     } else {
+//         CURRENT_STATE.FLAGS.V = 0;
+//     }
+// }
+
+// void adds_extended(int d, int n, uint32_t imm12, int shift) {
+//     uint64_t operand1;
+//     if (n == 31) {
+//         operand1 = CURRENT_STATE.REGS[31]; // uso el registro especial XZR/WZR.
+//     } else {
+//         operand1 = CURRENT_STATE.REGS[n];
+//     }
+
+//     uint64_t imm;
+//     if (shift == 1) {
+//         imm = imm12 << 12; // desplazo 12 bits a la izquierda.
+//     } else {
+//         imm = imm12; // uso el valor inmediato sin cambios.
+//     }
+
+//     uint64_t result = operand1 + imm;
+
+//     update_flags(result);
+
+//     CURRENT_STATE.REGS[d] = result;
+// }
+void ands_shifted_register(uint32_t instruction) {
+    uint8_t rd = (instruction >> 0) & 0x1F;  // Extraer Rd (registro destino)
+    uint8_t rn = (instruction >> 5) & 0x1F;  // Extraer Rn (primer operando)
+    uint8_t rm = (instruction >> 16) & 0x1F; // Extraer Rm (segundo operando)
+    
+    uint64_t operand1 = CURRENT_STATE.REGS[rn];
+    uint64_t operand2 = CURRENT_STATE.REGS[rm];
+    uint64_t result = operand1 & operand2;
+    
+    // Guardar el resultado en el registro destino
+    CURRENT_STATE.REGS[rd] = result;
+    
+    // Actualizar las banderas N y Z
+    NEXT_STATE.FLAG_N = (result >> 63) & 1; // Si el bit más significativo es 1, N = 1
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; // Si el resultado es 0, Z = 1
+    
+    // Avanzar el PC
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-
-void adds_extended(int d, int n, uint32_t imm12, int shift) {
-    uint64_t operand1;
-    if (n == 31) {
-        operand1 = CURRENT_STATE.REGS[31]; // uso el registro especial XZR/WZR.
-    } else {
-        operand1 = CURRENT_STATE.REGS[n];
-    }
-
-    uint64_t imm;
-    if (shift == 1) {
-        imm = imm12 << 12; // desplazo 12 bits a la izquierda.
-    } else {
-        imm = imm12; // uso el valor inmediato sin cambios.
-    }
-
-    uint64_t result = operand1 + imm;
-
-    update_flags(result);
-
-    CURRENT_STATE.REGS[d] = result;
-}
-
 
 /* tengo que tener en cuenta el decode stage y el execute stage*/
 void process_instruction() {
@@ -73,21 +91,21 @@ void process_instruction() {
 
     switch (opcode)
     {
-    case 0b1000101:
-        adds_extended(rd, rn, imm12, shift);
-        break;
-    case 0b110001:
-        adds_immediate(rd, rn, imm12, shift);
-        break;
-    case 0b1101011:
-        subs_extended(rd, rn, imm12, shift);
-        break;
-    case 0b111001:
-        subs_immediate(rd, rn, imm12, shift);
-        break;
-    case 0b1101001001:
-        hlt();
-        break;
+    // case 0b1000101:
+    //     adds_extended(rd, rn, imm12, shift);
+    //     break;
+    // case 0b110001:
+    //     adds_immediate(rd, rn, imm12, shift);
+    //     break;
+    // case 0b1101011:
+    //     subs_extended(rd, rn, imm12, shift);
+    //     break;
+    // case 0b111001:
+    //     subs_immediate(rd, rn, imm12, shift);
+    //     break;
+    // case 0b1101001001:
+    //     hlt();
+    //     break;
     // case 0b1101011:
     //     cmp_extended(rd, rn, imm12, shift);
     //     break;
@@ -95,20 +113,21 @@ void process_instruction() {
     //     cmp_immediate(rd, rn, imm12, shift);
     //     break;
     case 0b11100100:
-        ands_shifted_register(rd, rn, imm12, shift);
+        // ands_shifted_register(rd, rn, imm12, shift);
+        ands_shifted_register(instruction);
         break;
-    case 0b1001010:
-        eor_shifted_register(rd, rn, imm12, shift);
-        break;
-    case 0b10101010:
-        orr_shifted_register(rd, rn, imm12, shift);
-        break;
-    case 0b101:
-        b();
-        break;
-    case 0b1101011000011111000000:
-        br();
-        break;
+    // case 0b1001010:
+    //     eor_shifted_register(rd, rn, imm12, shift);
+    //     break;
+    // case 0b10101010:
+    //     orr_shifted_register(rd, rn, imm12, shift);
+    //     break;
+    // case 0b101:
+    //     b();
+    //     break;
+    // case 0b1101011000011111000000:
+    //     br();
+    //     break;
 
     }
 }
