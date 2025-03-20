@@ -232,6 +232,10 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift);
 void cmp_extended(int rd, int rn, int imm3, int option, int rm);
 void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
 void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
+void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
+// uint32_t extended_instruction(inst){
+//     return inst = (inst & 0xFFFFFFFB); // Agregar un 0 en la tercera posición
+// }
 
 
 void process_instruction() {
@@ -239,8 +243,10 @@ void process_instruction() {
     NEXT_STATE = CURRENT_STATE;
 
     uint32_t opCode8 = (instruction >> 24) & 0xFF;
-    uint32_t opCode_extended = (instruction >> 21) & 0xFF;
-
+    uint32_t opCode_extended = (instruction >> 21) & 0xFFF;
+    printf("instruction: %x\n", instruction);
+    printf("opcode8: %x\n", opCode8);
+    printf("opcode_extended: %x\n", opCode_extended);
     if( opCode8 == 0xB1 ){          // ADDS IMMEDIATE
         uint32_t shift = (instruction >> 22) & 0x1;
         // uint32_t imm12 = instruction & 0xFFF;
@@ -253,7 +259,7 @@ void process_instruction() {
 
     }
 
-    else if( opCode_extended == 0x558){   //0b10101011000            ADDS EXTENDED
+    else if( opCode_extended == 0xAB0){   //0b10101011000            ADDS EXTENDED
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x7;
@@ -575,7 +581,7 @@ void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
     printf("result: %llu\n", result);
     printf("rd: %d\n", rd);
     printf("rn: %d\n", rn);
-    printf("imm6: %llu\n", imm6);
+    printf("imm6: %d\n", imm6);
     printf("rm: %d\n", rm);
     printf("n: %d\n", n);
     printf("shift: %d\n", shift);
@@ -595,9 +601,28 @@ void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
     printf("result: %llu\n", result);
     printf("rd: %d\n", rd);
     printf("rn: %d\n", rn);
-    printf("imm6: %llu\n", imm6);
+    printf("imm6: %d\n", imm6);
     printf("rm: %d\n", rm);
     printf("n: %d\n", n);
     printf("shift: %d\n", shift);
 }
 
+void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
+    uint64_t operand1 = CURRENT_STATE.REGS[rn];
+    uint64_t operand2 = CURRENT_STATE.REGS[rm];
+    uint64_t result = operand1 | operand2;
+    
+    update_flags(result);
+    NEXT_STATE.REGS[rd] = result;
+
+    // Depuracion 
+    printf("operand1: %llu\n", operand1);
+    printf("operand2: %llu\n", operand2);
+    printf("result: %llu\n", result);
+    printf("rd: %d\n", rd);
+    printf("rn: %d\n", rn);
+    printf("imm6: %d\n", imm6);
+    printf("rm: %d\n", rm);
+    printf("n: %d\n", n);
+    printf("shift: %d\n", shift);
+}
