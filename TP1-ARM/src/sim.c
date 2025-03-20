@@ -233,6 +233,7 @@ void cmp_extended(int rd, int rn, int imm3, int option, int rm);
 void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
 void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
 void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
+void execute_b(uint32_t imm26);
 // uint32_t extended_instruction(inst){
 //     return inst = (inst & 0xFFFFFFFB); // Agregar un 0 en la tercera posición
 // }
@@ -243,7 +244,8 @@ void process_instruction() {
     NEXT_STATE = CURRENT_STATE;
 
     uint32_t opCode8 = (instruction >> 24) & 0xFF;
-    uint32_t opCode_extended = (instruction >> 21) & 0xFFF;
+    uint32_t opCode_extended = (instruction >> 21) & 0x7FF;
+    uint32_t opCode6 = (instruction >> 26) & 0x3F;
     printf("instruction: %x\n", instruction);
     printf("opcode8: %x\n", opCode8);
     printf("opcode_extended: %x\n", opCode_extended);
@@ -259,7 +261,7 @@ void process_instruction() {
 
     }
 
-    else if( opCode_extended == 0xAB0){   //0b10101011000            ADDS EXTENDED
+    else if( opCode_extended == 0x558){   //0b10101011000            ADDS EXTENDED
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x7;
@@ -328,6 +330,34 @@ void process_instruction() {
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode8);
     }
+
+    else if( opCode8 == 0xAA ){       //            ORR (shifted register) 0b10101010
+        uint32_t shift = (instruction >> 22) & 0x3;
+        uint32_t rm = (instruction >> 16) & 0x1F;
+        uint32_t imm6 = (instruction >> 10) & 0x3F;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rd = instruction & 0x1F;
+        orr_shifted_register(rd, rn, imm6, rm, 0, shift);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+    }
+    
+    else if( opCode6 == 0x5 ){       //            B 0b000101
+        int32_t imm26 = (instruction & 0x03FFFFFF); 
+        execute_b(imm26);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+    }
+
+
+
+
+    else{
+        printf("Error: opcode no reconocido\n");
+    }
+
+    
+
 
 
 
@@ -626,3 +656,20 @@ void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
     printf("n: %d\n", n);
     printf("shift: %d\n", shift);
 }
+
+void execute_b(uint32_t imm26) {
+    int64_t offset = ((int64_t)imm26 << 2); 
+    
+    if (imm26 & (1 << 25)) { 
+        offset |= 0xFFFFFFFFFC000000; 
+    }
+    
+    NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    
+    // Depuración
+    printf("Branch Execution:\n");
+    printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
+    printf("Offset: %lld (0x%llx)\n", offset, offset);
+    printf("New PC: 0x%llx\n", NEXT_STATE.PC);
+}
+
