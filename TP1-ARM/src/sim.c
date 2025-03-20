@@ -225,7 +225,8 @@ static void update_flags(int64_t result) {
 
 void adds_immediate(int d, int n, uint32_t imm12, int shift);
 void adds_extended(int d, int n, int imm3, int option, int rm);
-void sub_immediate(int d, int n, uint32_t imm12, int shift);
+void subs_immediate(int d, int n, uint32_t imm12, int shift);
+void subs_extended(int d, int n, int imm3, int option, int rm);
 
 
 void process_instruction() {
@@ -233,6 +234,7 @@ void process_instruction() {
     NEXT_STATE = CURRENT_STATE;
 
     uint32_t opCode8 = (instruction >> 24) & 0xFF;
+    uint32_t opCode_extended = (instruction >> 21) & 0xFF;
 
     if( opCode8 == 0xB1 ){          // ADDS IMMEDIATE
         uint32_t shift = (instruction >> 22) & 0x1;
@@ -246,25 +248,37 @@ void process_instruction() {
 
     }
 
-    elif( opCode8 == 0x559);   //0b10101011001            ADDS EXTENDED
+    else if( opCode_extended == 0x558){   //0b10101011000            ADDS EXTENDED
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
-        uint32_t imm3 = (instruction >> 10) & 0x111;
+        uint32_t imm3 = (instruction >> 10) & 0x7;
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rd = instruction & 0x1F;
         adds_extended(rd, rn, imm3, option, rm);
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode8);
-    
+    }
 
-    elif( opCode8 == 0xD1);        //0b11010001    SUB immediate
+    else if( opCode8 == 0xF1){        //0b11110001    SUB immediate
         uint32_t shift = (instruction >> 22) & 0x1;
         uint32_t imm12 = (instruction >> 10) & 0xFFF;
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rd = instruction & 0x1F;
-        sub_immediate(rd, rn, imm12, shift);
+        subs_immediate(rd, rn, imm12, shift);
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode8);
+    }
+
+    else if( opCode_extended == 0x758){   //0b11101011000            SUBS EXTENDED
+        uint32_t rm = (instruction >> 16) & 0xF;
+        uint32_t option = (instruction >> 13) & 0x7;
+        uint32_t imm3 = (instruction >> 10) & 0x7;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rd = instruction & 0x1F;
+        subs_extended(rd, rn, imm3, option, rm);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+    }
 
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
@@ -309,9 +323,6 @@ void adds_immediate(int d, int n, uint32_t imm12, int shift) {
     printf("shift: %d\n", shift);
 }
 
-
-
-
 void adds_extended(int d, int n, int imm3, int option, int rm) {
     uint64_t operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
@@ -354,7 +365,7 @@ void adds_extended(int d, int n, int imm3, int option, int rm) {
 }
 
 
-void sub_immediate(int d, int n, uint32_t imm12, int shift){
+void subs_immediate(int d, int n, uint32_t imm12, int shift){
     uint64_t operand1;
     uint64_t imm;
 
@@ -386,3 +397,46 @@ void sub_immediate(int d, int n, uint32_t imm12, int shift){
     printf("imm12: %d\n", imm12);
     printf("shift: %d\n", shift);
 }
+
+void subs_extended(int d, int n, int imm3, int option, int rm){
+    uint64_t operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n];  // Si n == 31, usa el stack pointer (SP)
+    uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
+
+    // Aplicar extensión según el campo 'option'
+    switch (option) {
+        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
+        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
+        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
+        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
+        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
+        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
+        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        default:
+            printf("Error: opción de extensión inválida (%d)\n", option);
+            return;
+    }
+
+    // Aplicar el desplazamiento (imm3 debe estar entre 0 y 4)
+    if (imm3 > 4) {
+        printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
+        return;
+    }
+    operand2 <<= imm3;
+
+    // Resta con actualización de flags
+    uint64_t result = operand1 - operand2;
+    
+    update_flags(result);
+
+    // Guardar el resultado en el registro destino
+    NEXT_STATE.REGS[d] = result;
+
+    // Depuración
+    printf("operand1: %llu\n", operand1);
+    printf("operand2 (extendido y desplazado): %llu\n", operand2);
+    printf("result: %llu\n", result);
+    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", d, n, rm, imm3, option);
+}
+
+
