@@ -223,13 +223,15 @@ static void update_flags(int64_t result) {
     NEXT_STATE.FLAG_N = (result < 0);
 }
 
-void adds_immediate(int d, int n, uint32_t imm12, int shift);
-void adds_extended(int d, int n, int imm3, int option, int rm);
-void subs_immediate(int d, int n, uint32_t imm12, int shift);
-void subs_extended(int d, int n, int imm3, int option, int rm);
+void adds_immediate(int rd, int rn, uint32_t imm12, int shift);
+void adds_extended(int rd, int rn, int imm3, int option, int rm);
+void subs_immediate(int rd, int rn, uint32_t imm12, int shift);
+void subs_extended(int rd, int rn, int imm3, int option, int rm);
 void hlt();
-void cmp_immediate(int d, int n, uint32_t imm12, int shift);
-void cmp_extended(int d, int n, int imm3, int option, int rm);
+void cmp_immediate(int rd, int rn, uint32_t imm12, int shift);
+void cmp_extended(int rd, int rn, int imm3, int option, int rm);
+void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
+void eor_shifted_register();
 
 
 void process_instruction() {
@@ -299,20 +301,35 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
 
+    else if(opCode8 == 0xEA){       //            ANDS (shifted register) 0b11101010
+        uint32_t shift = (instruction >> 22) & 0x3;
+        uint32_t rm = (instruction >> 16) & 0x1F;
+        uint32_t imm6 = (instruction >> 10) & 0x3F;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rd = instruction & 0x1F;
+        ands_shifted_register(rd, rn, imm6, rm, 0, shift);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+    }
+
+    // else if(){
+
+    // }
+
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 
 
-void adds_immediate(int d, int n, uint32_t imm12, int shift) {
+void adds_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
     
-    if (n == 31) {
+    if (rn == 31) {
         operand1 = CURRENT_STATE.REGS[31]; // uso el registro especial XZR/WZR.
     } else {
-        operand1 = CURRENT_STATE.REGS[n];
+        operand1 = CURRENT_STATE.REGS[rn];
     }
 
     printf("operand1: %llu\n", operand1);
@@ -329,21 +346,21 @@ void adds_immediate(int d, int n, uint32_t imm12, int shift) {
 
     uint64_t result = operand1 + imm;
     update_flags(result);
-    NEXT_STATE.REGS[d] = result;
+    NEXT_STATE.REGS[rd] = result;
 
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("d: %d\n", d);
-    printf("n: %d\n", n);
+    printf("d: %d\n", rd);
+    printf("n: %d\n", rn);
     printf("imm12: %d\n", imm12);
     printf("shift: %d\n", shift);
 }
 
-void adds_extended(int d, int n, int imm3, int option, int rm) {
-    uint64_t operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n];  // Si n == 31, usa el stack pointer (SP)
+void adds_extended(int rd, int rn, int imm3, int option, int rm) {
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     // Aplicar extensión según el campo 'option'
@@ -374,21 +391,21 @@ void adds_extended(int d, int n, int imm3, int option, int rm) {
     update_flags(result);
 
     // Guardar el resultado en el registro destino
-    NEXT_STATE.REGS[d] = result;
+    NEXT_STATE.REGS[rd] = result;
 
     // Depuración
     printf("operand1: %llu\n", operand1);
     printf("operand2 (extendido y desplazado): %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", d, n, rm, imm3, option);
+    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
 }
 
 
-void subs_immediate(int d, int n, uint32_t imm12, int shift){
+void subs_immediate(int rd, int rn, uint32_t imm12, int shift){
     uint64_t operand1;
     uint64_t imm;
 
-    operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n]; // Uso el registro especial XZR/WZR si n es 31.
+    operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
 
     printf("operand1: %llu\n", operand1);
 
@@ -404,21 +421,21 @@ void subs_immediate(int d, int n, uint32_t imm12, int shift){
 
     uint64_t result = operand1 - imm;
     update_flags(result);
-    NEXT_STATE.REGS[d] = result;
+    NEXT_STATE.REGS[rd] = result;
 
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("d: %d\n", d);
-    printf("n: %d\n", n);
+    printf("d: %d\n", rd);
+    printf("n: %d\n", rn);
     printf("imm12: %d\n", imm12);
     printf("shift: %d\n", shift);
 }
 
-void subs_extended(int d, int n, int imm3, int option, int rm){
-    uint64_t operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n];  // Si n == 31, usa el stack pointer (SP)
+void subs_extended(int rd, int rn, int imm3, int option, int rm){
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     // Aplicar extensión según el campo 'option'
@@ -449,13 +466,13 @@ void subs_extended(int d, int n, int imm3, int option, int rm){
     update_flags(result);
 
     // Guardar el resultado en el registro destino
-    NEXT_STATE.REGS[d] = result;
+    NEXT_STATE.REGS[rd] = result;
 
     // Depuración
     printf("operand1: %llu\n", operand1);
     printf("operand2 (extendido y desplazado): %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", d, n, rm, imm3, option);
+    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
 }
 
 
@@ -464,11 +481,11 @@ void hlt(){
 }
 
 
-void cmp_immediate(int d, int n, uint32_t imm12, int shift){
+void cmp_immediate(int rd, int rn, uint32_t imm12, int shift){
     uint64_t operand1;
     uint64_t imm;
 
-    operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n]; // Uso el registro especial XZR/WZR si n es 31.
+    operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
 
     printf("operand1: %llu\n", operand1);
 
@@ -490,14 +507,14 @@ void cmp_immediate(int d, int n, uint32_t imm12, int shift){
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("d: %d\n", d);
-    printf("n: %d\n", n);
+    printf("d: %d\n", rd);
+    printf("n: %d\n", rn);
     printf("imm12: %d\n", imm12);
     printf("shift: %d\n", shift);
 }
 
-void cmp_extended(int d, int n, int imm3, int option, int rm){
-    uint64_t operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n];  // Si n == 31, usa el stack pointer (SP)
+void cmp_extended(int rd, int rn, int imm3, int option, int rm){
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     // Aplicar extensión según el campo 'option'
@@ -531,8 +548,23 @@ void cmp_extended(int d, int n, int imm3, int option, int rm){
     printf("operand1: %llu\n", operand1);
     printf("operand2 (extendido y desplazado): %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", d, n, rm, imm3, option);
+    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
 
 }
 
 
+void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
+    uint64_t operand1 = CURRENT_STATE.REGS[rn];
+    uint64_t operand2 = CURRENT_STATE.REGS[rm];
+    uint64_t result = operand1 & operand2;
+    
+    CURRENT_STATE.REGS[rd] = result;
+    
+    update_flags(result);
+    
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+
+void eor_shifted_register(){
+    
+}
