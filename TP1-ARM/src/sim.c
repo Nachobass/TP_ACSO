@@ -215,6 +215,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 #include "shell.h"  // nose si se puede
 
 
@@ -234,6 +235,8 @@ void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
 void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
 void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift);
 void execute_b(uint32_t imm26);
+void execute_br(uint8_t rn);
+void execute_b_cond(uint32_t imm19, uint8_t condition);
 // uint32_t extended_instruction(inst){
 //     return inst = (inst & 0xFFFFFFFB); // Agregar un 0 en la tercera posición
 // }
@@ -244,11 +247,12 @@ void process_instruction() {
     NEXT_STATE = CURRENT_STATE;
 
     uint32_t opCode8 = (instruction >> 24) & 0xFF;
-    uint32_t opCode_extended = (instruction >> 21) & 0x7FF;
+    uint32_t opCode11 = (instruction >> 21) & 0x7FF;
     uint32_t opCode6 = (instruction >> 26) & 0x3F;
+    uint32_t opCode22 = (instruction >> 10) & 0x3FFFFF;
     printf("instruction: %x\n", instruction);
     printf("opcode8: %x\n", opCode8);
-    printf("opcode_extended: %x\n", opCode_extended);
+    printf("opcode_extended: %x\n", opCode11);
     if( opCode8 == 0xB1 ){          // ADDS IMMEDIATE
         uint32_t shift = (instruction >> 22) & 0x1;
         // uint32_t imm12 = instruction & 0xFFF;
@@ -261,7 +265,7 @@ void process_instruction() {
 
     }
 
-    else if( opCode_extended == 0x558){   //0b10101011000            ADDS EXTENDED
+    else if( opCode11 == 0x558){   //0b10101011000            ADDS EXTENDED
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x7;
@@ -269,7 +273,7 @@ void process_instruction() {
         uint32_t rd = instruction & 0x1F;
         adds_extended(rd, rn, imm3, option, rm);
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode8);
+        printf("opcode: %x\n", opCode11);
     }
 
     else if( opCode8 == 0xF1){        //0b11110001    SUB immediate
@@ -287,7 +291,7 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
 
-    else if( opCode_extended == 0x758){   //0b11101011000              SUBS EXTENDED
+    else if( opCode11 == 0x758){   //0b11101011000              SUBS EXTENDED
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x7;
@@ -300,13 +304,13 @@ void process_instruction() {
         }
         
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode8);
+        printf("opcode: %x\n", opCode11);
     }
 
-    else if( opCode_extended == 0x6A2 ){       //            HLT
+    else if( opCode11 == 0x6A2 ){       //            HLT
         hlt();
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode8);
+        printf("opcode: %x\n", opCode11);
     }
 
     else if( opCode8 == 0xEA ){       //            ANDS (shifted register) 0b11101010
@@ -349,16 +353,25 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
 
+    else if( opCode22 == 0x3587C0 ){  //  Br 0b1101011000011111000000 
+        uint8_t rn = (instruction >> 5) & 0x1F;
+        execute_br(rn);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode22);
+    }
 
+    else if( opCode8 == 0x54){ // B.cond 0b01010100
+        int32_t imm19 = (instruction >> 5) & 0x7FFFF; 
+        uint8_t condition = instruction & 0xF;
+        execute_b_cond(imm19, condition);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
 
+    }
 
     else{
         printf("Error: opcode no reconocido\n");
     }
-
-    
-
-
 
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
@@ -673,3 +686,48 @@ void execute_b(uint32_t imm26) {
     printf("New PC: 0x%llx\n", NEXT_STATE.PC);
 }
 
+void execute_br(uint8_t rn) {
+    uint64_t target = CURRENT_STATE.REGS[rn];
+    
+    NEXT_STATE.PC = target;
+    
+    // Depuración
+    printf("Branch Register Execution:\n");
+    printf("Register X%d contains address: 0x%llx\n", rn, target);
+    printf("New PC: 0x%llx\n", NEXT_STATE.PC);
+}
+
+
+
+
+void execute_b_cond(uint32_t imm19, uint8_t condition) { 
+    int64_t offset = ((int64_t)imm19 << 2); 
+    
+    if (imm19 & (1 << 18)) { // Si el bit 18 está encendido, es negativo
+        offset |= 0xFFFFFFFFFFF80000; 
+    }
+    
+    
+    bool cond;
+    switch (condition) {
+        case 0x0: cond = CURRENT_STATE.FLAG_Z;  // BEQ (Z == 1)
+        case 0x1: cond = !CURRENT_STATE.FLAG_Z; // BNE (Z == 0)
+        case 0xA: cond = !CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; // BGT (N == 0 && Z == 0)
+        case 0xB: cond = CURRENT_STATE.FLAG_N; // BLT (N == 1)
+        case 0xC: cond = !CURRENT_STATE.FLAG_N; // BGE (N == 0)
+        case 0xD: cond = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N; // BLE (Z == 1 || N == 1)
+        default: return 0; 
+    }
+    if (cond) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4; 
+    }
+    
+    // Depuración
+    printf("Conditional Branch Execution:\n");
+    printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
+    printf("Offset: %lld (0x%llx)\n", offset, offset);
+    printf("Condition: 0x%x\n", condition);
+
+}
