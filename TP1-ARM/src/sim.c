@@ -225,6 +225,7 @@ static void update_flags(int64_t result) {
 
 void adds_immediate(int d, int n, uint32_t imm12, int shift);
 void adds_extended(int d, int n, int imm3, int option, int rm);
+void sub_immediate(int d, int n, uint32_t imm12, int shift);
 
 
 void process_instruction() {
@@ -245,7 +246,7 @@ void process_instruction() {
 
     }
 
-    if( opCode8 == 0x559){   //0b10101011001            ADDS EXTENDED
+    elif( opCode8 == 0x559);   //0b10101011001            ADDS EXTENDED
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x111;
@@ -254,7 +255,17 @@ void process_instruction() {
         adds_extended(rd, rn, imm3, option, rm);
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode8);
-    }
+    
+
+    elif( opCode8 == 0xD1);        //0b11010001    SUB immediate
+        uint32_t shift = (instruction >> 22) & 0x1;
+        uint32_t imm12 = (instruction >> 10) & 0xFFF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rd = instruction & 0x1F;
+        sub_immediate(rd, rn, imm12, shift);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
@@ -340,4 +351,38 @@ void adds_extended(int d, int n, int imm3, int option, int rm) {
     printf("operand2 (extendido y desplazado): %llu\n", operand2);
     printf("result: %llu\n", result);
     printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", d, n, rm, imm3, option);
+}
+
+
+void sub_immediate(int d, int n, uint32_t imm12, int shift){
+    uint64_t operand1;
+    uint64_t imm;
+
+    operand1 = (n == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[n]; // Uso el registro especial XZR/WZR si n es 31.
+
+    printf("operand1: %llu\n", operand1);
+
+    // Solo se permiten shifts 0 y 1 según el manual de ARM
+    if (shift == 0) {
+        imm = imm12;  // LSL #0 (sin desplazamiento)
+    } else if (shift == 1) {
+        imm = imm12 << 12;  // LSL #12 (desplazamiento de 12 bits)
+    } else {
+        printf("Error: shift inválido (%d). Solo 0 y 1 están permitidos.\n", shift);
+        return;
+    }
+
+    uint64_t result = operand1 - imm;
+    update_flags(result);
+    NEXT_STATE.REGS[d] = result;
+
+
+    // Depuracion 
+    printf("operand1: %llu\n", operand1);
+    printf("imm: %llu\n", imm);
+    printf("result: %llu\n", result);
+    printf("d: %d\n", d);
+    printf("n: %d\n", n);
+    printf("imm12: %d\n", imm12);
+    printf("shift: %d\n", shift);
 }
