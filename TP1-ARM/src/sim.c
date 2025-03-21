@@ -25,6 +25,7 @@ void execute_br(uint8_t rn);
 void execute_b_cond(uint32_t imm19, uint8_t condition);
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
+void stur(int rt, int rn, int imm9);
 
 
 void process_instruction() {
@@ -174,6 +175,15 @@ void process_instruction() {
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rd = instruction & 0x1F;
         lsr_immediate(rd, rn, imms, immr, 0);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode11);
+    }
+
+    else if( opCode11 == 0x7E0 ){
+        uint32_t imm9 = (instruction >> 12) & 0x1FF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rt = instruction & 0x1F;
+        stur(rt, rn, imm9);
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode11);
     }
@@ -576,3 +586,22 @@ void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n){
     printf("immr: %d\n", immr);
     printf("n: %d\n", n);
 }
+
+
+void stur(int rt, int rn, int imm9) {
+    // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    uint64_t data = CURRENT_STATE.REGS[rt];
+    mem_write_64(address, data);
+
+    // Depuración
+    printf("STUR Execution:\n");
+    printf("Register X%d contains data: 0x%llx\n", rt, data);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data stored: 0x%llx\n", data);
+}
+
+
