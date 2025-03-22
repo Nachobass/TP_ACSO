@@ -35,6 +35,8 @@ void movz(int rd, int imm16, int hw);
 void add_immediate(int rd, int rn, uint32_t imm12, int shift);
 void add_extended(int rd, int rn, int imm3, int option, int rm);
 void mul(int rd, int rn, int rm);
+void cbz(int rt, int imm19);
+void cbnz(int rt, int imm19);
 
 // ME PARECE QUE NO EXISTE MEM_WRITE 8,16, 64
 
@@ -282,6 +284,22 @@ void process_instruction() {
         printf("opcode: %x\n", opCode11);
     }
 
+    else if( opCode8 == 0xB4 ){         //                       CBZ 0b10110100
+        uint32_t imm19 = (instruction >> 5) & 0x7FFFF;
+        uint32_t rt = instruction & 0x1F;
+        cbz(rt, imm19);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+    }
+
+    else if( opCode8 == 0xB5 ){         //                       CBNZ 0b10110101
+        uint32_t imm19 = (instruction >> 5) & 0x7FFFF;
+        uint32_t rt = instruction & 0x1F;
+        cbnz(rt, imm19);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode8);
+    }
+
     else{
         printf("Error: opcode no reconocido\n");
     }
@@ -371,7 +389,7 @@ void adds_extended(int rd, int rn, int imm3, int option, int rm) {
 }
 
 
-void subs_immediate(int rd, int rn, uint32_t imm12, int shift){
+void subs_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
 
@@ -404,7 +422,7 @@ void subs_immediate(int rd, int rn, uint32_t imm12, int shift){
     printf("shift: %d\n", shift);
 }
 
-void subs_extended(int rd, int rn, int imm3, int option, int rm){
+void subs_extended(int rd, int rn, int imm3, int option, int rm) {
     uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
@@ -446,12 +464,12 @@ void subs_extended(int rd, int rn, int imm3, int option, int rm){
 }
 
 
-void hlt(){
+void hlt() {
     RUN_BIT = 0;
 }
 
 
-void cmp_immediate(int rd, int rn, uint32_t imm12, int shift){
+void cmp_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
 
@@ -483,7 +501,7 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift){
     printf("shift: %d\n", shift);
 }
 
-void cmp_extended(int rd, int rn, int imm3, int option, int rm){
+void cmp_extended(int rd, int rn, int imm3, int option, int rm) {
     uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
@@ -523,7 +541,7 @@ void cmp_extended(int rd, int rn, int imm3, int option, int rm){
 }
 
 
-void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
+void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result = operand1 & operand2;
@@ -544,7 +562,7 @@ void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
 }
 
 
-void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
+void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result = operand1 ^ operand2;
@@ -564,7 +582,7 @@ void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
     printf("shift: %d\n", shift);
 }
 
-void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift){
+void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result = operand1 | operand2;
@@ -645,7 +663,7 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
 }
 
 
-void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n){
+void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
     uint64_t result = operand1 << shift;
@@ -663,7 +681,7 @@ void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n){
     printf("n: %d\n", n);
 }
 
-void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n){
+void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
     uint64_t result = operand1 >> shift;
@@ -740,7 +758,7 @@ void sturb(int rt, int rn, int imm9, int size) {
     printf("Data stored: 0x%llx\n", data);
 }
 
-void sturh(int rt, int rn, int imm9, int size){
+void sturh(int rt, int rn, int imm9, int size) {
     // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
     int64_t offset = (int64_t)((imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
@@ -832,7 +850,7 @@ void movz(int rd, int imm16, int hw){
 }
 
 
-void add_immediate(int rd, int rn, uint32_t imm12, int shift){
+void add_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
 
@@ -893,7 +911,7 @@ void add_extended(int rd, int rn, int imm3, int option, int rm){
 }
 
 
-void mul(int rd, int rn, int rm){
+void mul(int rd, int rn, int rm) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result = operand1 * operand2;
@@ -908,5 +926,52 @@ void mul(int rd, int rn, int rm){
     printf("rd: %d\n", rd);
     printf("rn: %d\n", rn);
     printf("rm: %d\n", rm);
+}
+
+
+void cbz(int rt, int imm19) {
+    uint64_t operand = CURRENT_STATE.REGS[rt];
+
+    // Sign-extend imm19 a 64 bits y multiplicar por 4
+    int64_t offset = (int64_t)((imm19 << 45) >> 45) << 2;
+
+    // Si el registro es cero, actualizar el PC
+    if (operand == 0) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+        printf("CBZ: X%d == 0, salto a 0x%llx\n", rt, NEXT_STATE.PC);
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
+        printf("CBZ: X%d != 0, no salta\n", rt);
+    }
+
+    // Depuración
+    printf("CBZ Execution:\n");
+    printf("Register X%d contains value: 0x%llx\n", rt, operand);
+    printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
+    printf("Offset: %lld (0x%llx)\n", offset, offset);
+    printf("New PC: 0x%llx\n", NEXT_STATE.PC);
+}
+
+void cbnz(int rt, int imm19) {
+    uint64_t operand = CURRENT_STATE.REGS[rt];
+
+    // Sign-extend imm19 a 64 bits y multiplicar por 4
+    int64_t offset = (int64_t)((imm19 << 45) >> 45) << 2;
+
+    // Si el registro no es cero, actualizar el PC
+    if (operand != 0) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+        printf("CBNZ: X%d != 0, salto a 0x%llx\n", rt, NEXT_STATE.PC);
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
+        printf("CBNZ: X%d == 0, no salta\n", rt);
+    }
+
+    // Depuración
+    printf("CBNZ Execution:\n");
+    printf("Register X%d contains value: 0x%llx\n", rt, operand);
+    printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
+    printf("Offset: %lld (0x%llx)\n", offset, offset);
+    printf("New PC: 0x%llx\n", NEXT_STATE.PC);
 }
 
