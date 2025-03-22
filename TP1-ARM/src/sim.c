@@ -25,8 +25,16 @@ void execute_br(uint8_t rn);
 void execute_b_cond(uint32_t imm19, uint8_t condition);
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
-void stur(int rt, int rn, int imm9);
+void stur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void sturb(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void sturh(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void ldur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void ldurh(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void ldurb(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void movz(int rd, int imm16, int hw);
+void add_immediate(int rd, int rn, uint32_t imm12, int shift);
 
+// ME PARECE QUE NO EXISTE MEM_WRITE 8,16, 64
 
 void process_instruction() {
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
@@ -42,7 +50,7 @@ void process_instruction() {
     printf("opcode8: %x\n", opCode8);
     printf("opcode_extended: %x\n", opCode11);
 
-    if( opCode8 == 0xB1 ){          // ADDS IMMEDIATE
+    if( opCode8 == 0xB1 ){              //                      ADDS IMMEDIATE
         uint32_t shift = (instruction >> 22) & 0x1;
         // uint32_t imm12 = instruction & 0xFFF;
         uint32_t imm12 = (instruction >> 10) & 0xFFF;
@@ -54,7 +62,7 @@ void process_instruction() {
 
     }
 
-    else if( opCode11 == 0x558){   //0b10101011000            ADDS EXTENDED
+    else if( opCode11 == 0x558){        //                      ADDS EXTENDED 0b10101011000
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x7;
@@ -65,7 +73,7 @@ void process_instruction() {
         printf("opcode: %x\n", opCode11);
     }
 
-    else if( opCode8 == 0xF1){        //0b11110001    SUB immediate
+    else if( opCode8 == 0xF1){          //                      SUB immediate 0b11110001
         uint32_t shift = (instruction >> 22) & 0x1;
         uint32_t imm12 = (instruction >> 10) & 0xFFF;
         uint32_t rn = (instruction >> 5) & 0x1F;
@@ -80,7 +88,7 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
 
-    else if( opCode11 == 0x758){   //0b11101011000              SUBS EXTENDED
+    else if( opCode11 == 0x758){        //                      SUBS EXTENDED  0b11101011000
         uint32_t rm = (instruction >> 16) & 0xF;
         uint32_t option = (instruction >> 13) & 0x7;
         uint32_t imm3 = (instruction >> 10) & 0x7;
@@ -96,13 +104,13 @@ void process_instruction() {
         printf("opcode: %x\n", opCode11);
     }
 
-    else if( opCode11 == 0x6A2 ){       //            HLT
+    else if( opCode11 == 0x6A2 ){       //                      HLT
         hlt();
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode11);
     }
 
-    else if( opCode8 == 0xEA ){       //            ANDS (shifted register) 0b11101010
+    else if( opCode8 == 0xEA ){         //                      ANDS (shifted register) 0b11101010
         uint32_t shift = (instruction >> 22) & 0x3;
         uint32_t rm = (instruction >> 16) & 0x1F;
         uint32_t imm6 = (instruction >> 10) & 0x3F;
@@ -113,7 +121,7 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
 
-    else if( opCode8 == 0xCA ){       //            EOR (shifted register) 0b11001010
+    else if( opCode8 == 0xCA ){         //                      EOR (shifted register) 0b11001010
         uint32_t shift = (instruction >> 22) & 0x3;
         uint32_t rm = (instruction >> 16) & 0x1F;
         uint32_t imm6 = (instruction >> 10) & 0x3F;
@@ -124,7 +132,7 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
 
-    else if( opCode8 == 0xAA ){       //            ORR (shifted register) 0b10101010
+    else if( opCode8 == 0xAA ){         //                      ORR (shifted register) 0b10101010
         uint32_t shift = (instruction >> 22) & 0x3;
         uint32_t rm = (instruction >> 16) & 0x1F;
         uint32_t imm6 = (instruction >> 10) & 0x3F;
@@ -135,21 +143,21 @@ void process_instruction() {
         printf("opcode: %x\n", opCode8);
     }
     
-    else if( opCode6 == 0x5 ){       //            B 0b000101
+    else if( opCode6 == 0x5 ){          //                      B 0b000101
         int32_t imm26 = (instruction & 0x03FFFFFF); 
         execute_b(imm26);
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode8);
+        printf("opcode: %x\n", opCode6);
     }
 
-    else if( opCode22 == 0x3587C0 ){  //  Br 0b1101011000011111000000 
+    else if( opCode22 == 0x3587C0 ){    //                      Br 0b1101011000011111000000 
         uint8_t rn = (instruction >> 5) & 0x1F;
         execute_br(rn);
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode22);
     }
 
-    else if( opCode8 == 0x54){ // B.cond 0b01010100
+    else if( opCode8 == 0x54){          //                      B.cond 0b01010100
         int32_t imm19 = (instruction >> 5) & 0x7FFFF; 
         uint8_t condition = instruction & 0xF;
         execute_b_cond(imm19, condition);
@@ -158,7 +166,7 @@ void process_instruction() {
 
     }
 
-    else if( opCode9 == 0x1A6 ){       //            LSL immediate 0b110100110
+    else if( opCode9 == 0x1A6 ){        //                      LSL immediate 0b110100110
         // uint32_t n = (instruction >> 22) & 0x1;
         uint32_t immr = (instruction >> 16) & 0x3F;
         uint32_t imms = (instruction >> 10) & 0x3F;
@@ -166,26 +174,90 @@ void process_instruction() {
         uint32_t rd = instruction & 0x1F;
         lsl_immediate(rd, rn, imms, immr, 0);
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode11);
+        printf("opcode: %x\n", opCode9);
     }
 
-    else if( opCode9 == 0b110100110 ){
+    else if( opCode9 == 0x1A6 ){        //                      LSR immediate 0b110100110
         uint32_t immr = (instruction >> 16) & 0x3F;
         uint32_t imms = (instruction >> 10) & 0x3F;
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rd = instruction & 0x1F;
         lsr_immediate(rd, rn, imms, immr, 0);
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode11);
+        printf("opcode: %x\n", opCode9);
     }
 
-    else if( opCode11 == 0x7E0 ){
+    else if( opCode9 == 0x1E0 ){       //                       STUR 0b111100000
+        uint32_t size = (instruction >> 30) & 0x3;
         uint32_t imm9 = (instruction >> 12) & 0x1FF;
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rt = instruction & 0x1F;
-        stur(rt, rn, imm9);
+        stur(rt, rn, imm9, size);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode9);
+    }
+
+    else if( opCode9 == 0x1C0){        //                       STURB 0b111000000
+        uint32_t size = (instruction >> 30) & 0x3;
+        uint32_t imm9 = (instruction >> 12) & 0x1FF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rt = instruction & 0x1F;
+        if(size == 0b00){
+            sturb(rt, rn, imm9, size);
+        } else if(size == 0b01){
+            sturh(rt, rn, imm9, size);
+        }
+        // sturb(rt, rn, imm9, size);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode9);
+    }
+
+/*     else if( opCode9 == 0x1C0){  //                       STURH 0b111000000
+        uint32_t size = (instruction >> 30) & 0x3;
+        uint32_t imm9 = (instruction >> 12) & 0x1FF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rt = instruction & 0x1F;
+        sturh(rt, rn, imm9, size);
         printf("instruction: %x\n", instruction);
         printf("opcode: %x\n", opCode11);
+    } */
+   
+    else if( opCode9 == 0x1C2){        //                       LDUR 0b111000010
+        uint32_t size = (instruction >> 30) & 0x3;
+        uint32_t imm9 = (instruction >> 12) & 0x1FF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rt = instruction & 0x1F;
+        if( size == 0b10 || size == 0b11){
+            ldur(rt, rn, imm9, size);    
+        }
+        else if( size == 0b00){
+            ldurb(rt, rn, imm9, size);
+        }
+        else if( size == 0b01){
+            ldurh(rt, rn, imm9, size);
+        }
+        
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode9);
+    }
+
+    else if( opCode9 == 0x1A5 ){       //                       MOVZ 0b110100101
+        uint32_t hw = (instruction >> 21) & 0x3;
+        uint32_t imm16 = (instruction >> 5) & 0xFFFF;
+        uint32_t rd = instruction & 0x1F;
+        movz(rd, imm16, hw);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode9);
+    }
+
+    else if( opCode8 == 0x51){  //                       ADD immediate 0b10010001
+        uint32_t shift = (instruction >> 22) & 0x1;
+        uint32_t imm12 = (instruction >> 10) & 0xFFF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rd = instruction & 0x1F;
+        add_immediate(rd, rn, imm12, shift);
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode9);
     }
 
     else{
@@ -588,7 +660,7 @@ void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n){
 }
 
 
-void stur(int rt, int rn, int imm9) {
+/* void stur(int rt, int rn, int imm9) {
     // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
     int64_t offset = (int64_t)((imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
@@ -602,6 +674,160 @@ void stur(int rt, int rn, int imm9) {
     printf("Offset (sign-extended): %ld\n", offset);
     printf("Memory address: 0x%llx\n", address);
     printf("Data stored: 0x%llx\n", data);
+} */
+
+void stur(int rt, int rn, int imm9, int size) {
+    // Sign-extend imm9 a 64 bits (para manejar valores negativos correctamente)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    // Determinar el tamaño de datos a escribir
+    if (size == 2) { // 32-bit word
+        uint32_t data = (uint32_t)(CURRENT_STATE.REGS[rt]); // Solo los 32 bits inferiores
+        mem_write_32(address, data);
+        printf("STUR (32 bits): X%d -> Mem[0x%llx] = 0x%x\n", rt, address, data);
+    } else if (size == 3) { // 64-bit double word
+        uint64_t data = CURRENT_STATE.REGS[rt]; // Almacenar 64 bits completos
+        mem_write_64(address, data);
+        printf("STUR (64 bits): X%d -> Mem[0x%llx] = 0x%llx\n", rt, address, data);
+    } else {
+        printf("Error: Tamaño inválido en STUR (size=%d)\n", size);
+    }
+
+    // Depuración
+    printf("STUR Execution:\n");
+    // printf("Register X%d contains data: 0x%llx\n", rt, data);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    // printf("Data stored: 0x%llx\n", data);
 }
 
+void sturb(int rt, int rn, int imm9, int size) {
+    // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    uint64_t data = CURRENT_STATE.REGS[rt] & 0xFF;
+    mem_write_8(address, data);
 
+    // Depuración
+    printf("STURB (Store Byte) Execution:\n");
+    printf("Register X%d contains data: 0x%llx\n", rt, data);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data stored: 0x%llx\n", data);
+}
+
+void sturh(int rt, int rn, int imm9, int size){
+    // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    uint64_t data = CURRENT_STATE.REGS[rt] & 0xFFFF;
+    mem_write_16(address, data);
+
+    // Depuración
+    printf("STURH (Store Halfword) Execution:\n");
+    printf("Register X%d contains data: 0x%llx\n", rt, data);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data stored: 0x%llx\n", data);
+}
+
+// if (size == 2 || size == 3) {  //  (LDUR)
+void ldur(int rt, int rn, int imm9, int size) {
+    // Sign-extend imm9 a 64 bits (para manejar valores negativos correctamente)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    uint64_t data;
+    // Determinar el tamaño de datos a leer
+    if (size == 2) { // 32-bit word
+        data = mem_read_32(address);
+        printf("LDUR (32 bits): Mem[0x%llx] -> X%d = 0x%x\n", address, rt, data);
+    } else if (size == 3) { // 64-bit double word
+        data = mem_read_64(address);
+        printf("LDUR (64 bits): Mem[0x%llx] -> X%d = 0x%llx\n", address, rt, data);
+    } else {
+        printf("Error: Tamaño inválido en LDUR (size=%d)\n", size);
+    }
+
+    // Guardar el dato leído en el registro destino
+    NEXT_STATE.REGS[rt] = (uint64_t)data;
+
+    // Depuración
+    printf("LDUR Execution:\n");
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data loaded: 0x%llx\n", data);
+}
+
+// if (size == 1) {  // 16-bit (LDURH)
+void ldurh(int rt, int rn, int imm9, int size) {
+    // Extender signo de imm9 (manejar valores negativos)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    uint16_t data = mem_read_16(address);
+    NEXT_STATE.REGS[rt] = (uint64_t)data;
+
+    // Depuración
+    printf("LDURH: Mem[0x%llx] -> W%d = 0x%04x\n", address, rt, data);
+    printf("LDURH Execution:\n");
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data loaded: 0x%llx\n", data);
+}
+
+    // if (size == 0) {  // 8-bit (LDURB)
+void ldurb(int rt, int rn, int imm9, int size) {
+    // Extender signo de imm9 (manejar valores negativos)
+    int64_t offset = (int64_t)((imm9 << 55) >> 55);
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+    uint8_t data = mem_read_8(address);
+    NEXT_STATE.REGS[rt] = (uint64_t)data;
+
+    // Depuración
+    printf("LDURB: Mem[0x%llx] -> W%d = 0x%02x\n", address, rt, data);
+    printf("LDURB Execution:\n");
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %ld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data loaded: 0x%llx\n", data);
+}
+
+// solo implementamos con hw=0, es decir shift=0
+void movz(int rd, int imm16, int hw){
+    uint64_t imm = (uint64_t)imm16;
+    imm <<= (16 * hw);
+    NEXT_STATE.REGS[rd] = imm;
+
+    // Depuración
+    printf("MOVZ Execution:\n");
+    printf("Immediate value: 0x%llx\n", imm);
+    printf("Register X%d = 0x%llx\n", rd, imm);
+    printf("hw: %d\n", hw);
+}
+
+void add_immediate(int rd, int rn, uint32_t imm12, int shift){
+    uint64_t operand1;
+    uint64_t imm;
+
+    operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
+
+    printf("operand1: %llu\n", operand1);
+
+    // Solo se permiten shifts 0 y 1 según el manual de ARM
+    if (shift == 0b00) {
+        imm = imm12;  // LSL #0 (sin desplazamiento)
+    } else if (shift == 0b01) {
+        imm = imm12 << 12;  // LSL #12 (desplazamiento de 12 bits)
+    } else {
+        printf("Error: shift inválido (%d). Solo 0 y 1 están permitidos.\n", shift);
+        return;
+    }
+
+    uint64_t result = operand1 + imm;
+    update_flags(result);
+    NEXT_STATE.REGS[rd] = result;
+}
