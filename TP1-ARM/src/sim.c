@@ -729,12 +729,12 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     
     bool cond;
     switch (condition) {
-        case 0x0: cond = CURRENT_STATE.FLAG_Z;  // BEQ (Z == 1)
-        case 0x1: cond = !CURRENT_STATE.FLAG_Z; // BNE (Z == 0)
-        case 0xA: cond = !CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; // BGT (N == 0 && Z == 0)
-        case 0xB: cond = CURRENT_STATE.FLAG_N; // BLT (N == 1)
-        case 0xC: cond = !CURRENT_STATE.FLAG_N; // BGE (N == 0)
-        case 0xD: cond = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N; // BLE (Z == 1 || N == 1)
+        case 0x0: cond = CURRENT_STATE.FLAG_Z; break;  // BEQ (Z == 1)
+        case 0x1: cond = !CURRENT_STATE.FLAG_Z; break; // BNE (Z == 0)
+        case 0xA: cond = !CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // BGT (N == 0 && Z == 0)
+        case 0xB: cond = CURRENT_STATE.FLAG_N; break; // BLT (N == 1)
+        case 0xC: cond = !CURRENT_STATE.FLAG_N; break; // BGE (N == 0)
+        case 0xD: cond = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N; break; // BLE (Z == 1 || N == 1)
         // default: return 0; 
         default:
             printf("Error: condición inválida (%d)\n", condition);
