@@ -6,6 +6,9 @@
 
 
 void mem_write_64(uint64_t address, uint64_t value) {
+    if (address % 8 != 0) {
+        printf("Error: Dirección 0x%llx no alineada a 8 bytes\n", address);
+    }
     // Escribir la parte baja (32 bits menos significativos)
     mem_write_32(address, (uint32_t)(value & 0xFFFFFFFF));
 
@@ -14,6 +17,9 @@ void mem_write_64(uint64_t address, uint64_t value) {
 }
 
 uint64_t mem_read_64(uint64_t address) {
+    if (address % 8 != 0) {
+        printf("Error: Dirección 0x%llx no alineada a 8 bytes\n", address);
+    }
     // Leer la parte baja (32 bits menos significativos)
     uint32_t low = mem_read_32(address);
 
@@ -280,17 +286,17 @@ void process_instruction() {
         printf("opcode: %x\n", opCode9);
     }
 
-    else if( opCode9 == 0x1E0 ){        //                       STUR 0b111100000
+    else if( opCode11 == 0x7C0 ){        //                       STUR 0b11111000000
         uint32_t size = (instruction >> 30) & 0x3;
         uint32_t imm9 = (instruction >> 12) & 0x1FF;
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rt = instruction & 0x1F;
         stur(rt, rn, imm9, size);
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode9);
+        printf("opcode: %x\n", opCode11);
     }
 
-    else if( opCode9 == 0x1C0){         //                       STURB 0b111000000
+    else if( opCode11 == 0x1C0){         //                       STURB 0b00111000000
         uint32_t size = (instruction >> 30) & 0x3;
         uint32_t imm9 = (instruction >> 12) & 0x1FF;
         uint32_t rn = (instruction >> 5) & 0x1F;
@@ -302,7 +308,7 @@ void process_instruction() {
         }
         // sturb(rt, rn, imm9, size);
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode9);
+        printf("opcode: %x\n", opCode11);
     }
 
 /*     else if( opCode9 == 0x1C0){  //                       STURH 0b111000000
@@ -315,23 +321,37 @@ void process_instruction() {
         printf("opcode: %x\n", opCode11);
     } */
    
-    else if( opCode9 == 0x1C2){         //                       LDUR 0b111000010
+    else if( opCode11 == 0x7C2){        //                       LDUR 0b11111000010
         uint32_t size = (instruction >> 30) & 0x3;
         uint32_t imm9 = (instruction >> 12) & 0x1FF;
         uint32_t rn = (instruction >> 5) & 0x1F;
         uint32_t rt = instruction & 0x1F;
-        if( size == 0b10 || size == 0b11){
-            ldur(rt, rn, imm9, size);    
-        }
-        else if( size == 0b00){
-            ldurb(rt, rn, imm9, size);
-        }
-        else if( size == 0b01){
-            ldurh(rt, rn, imm9, size);
-        }
+        ldur(rt, rn, imm9, size);
+
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode11);
+    }
+
+    else if( opCode11 == 0x1C2){        //                       LDURB 0b00111000010
+        uint32_t size = (instruction >> 30) & 0x3;
+        uint32_t imm9 = (instruction >> 12) & 0x1FF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rt = instruction & 0x1F;
+        ldurb(rt, rn, imm9, size);
         
         printf("instruction: %x\n", instruction);
-        printf("opcode: %x\n", opCode9);
+        printf("opcode: %x\n", opCode11);
+    }
+
+    else if( opCode11 == 0x3C2){        //                       LDURH 0b01111000010
+        uint32_t size = (instruction >> 30) & 0x3;
+        uint32_t imm9 = (instruction >> 12) & 0x1FF;
+        uint32_t rn = (instruction >> 5) & 0x1F;
+        uint32_t rt = instruction & 0x1F;
+        ldurh(rt, rn, imm9, size);
+        
+        printf("instruction: %x\n", instruction);
+        printf("opcode: %x\n", opCode11);
     }
 
     else if( opCode9 == 0x1A5 ){        //                       MOVZ 0b110100101
@@ -760,23 +780,54 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
 }
 
 
-void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
-    uint64_t operand1 = CURRENT_STATE.REGS[rn];
-    uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
-    uint64_t result = operand1 << shift;
+// void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
+//     uint64_t operand1 = CURRENT_STATE.REGS[rn];
+//     uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
+//     // uint64_t shift = (imms - immr) & 0x3F;  // Equivalente a % 64
+//     if (shift > 63) {
+//         printf("Error: shift demasiado grande\n");
+//         return;
+//     }
+//     uint64_t result = operand1 << shift;
+//     // uint32_t shift = immr - imms;
+
     
-    update_flags(result);
+//     // uint64_t operand1 = CURRENT_STATE.REGS[rn];
+//     // uint64_t result = operand1 << shift;
+    
+//     update_flags(result);
+//     NEXT_STATE.REGS[rd] = result;
+
+//     // Depuracion 
+//     printf("operand1: %llu\n", operand1);
+//     printf("shift: %llu\n", shift);
+//     printf("result: %llu\n", result);
+//     printf("rd: %d\n", rd);
+//     printf("rn: %d\n", rn);
+//     printf("imms: %d\n", imms);
+//     printf("immr: %d\n", immr);
+//     printf("n: %d\n", n);
+// }
+
+void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
+    // Si el SF (signed flag) es 1, entonces trabajamos con 64 bits
+    uint64_t operand1 = CURRENT_STATE.REGS[rn];
+    uint32_t shift = imms & 0x3F;  // Aseguramos que tomamos los 6 bits menos significativos
+
+    // Desplazar operand1 a la izquierda por el número de bits especificado en imms
+    uint64_t result = operand1 << shift;
+
+    // Guardamos el resultado en el registro de destino (rd)
     NEXT_STATE.REGS[rd] = result;
 
-    // Depuracion 
-    printf("operand1: %llu\n", operand1);
-    printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imms: %d\n", imms);
-    printf("immr: %d\n", immr);
-    printf("n: %d\n", n);
+    // Depuración
+    printf("LSL Immediate:\n");
+    printf("operand1 (X%d): 0x%llx\n", rn, operand1);
+    printf("shift: %u\n", shift);
+    printf("result (X%d): 0x%llx\n", rd, result);
 }
+
+
 
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
@@ -823,17 +874,23 @@ void stur(int rt, int rn, int imm9, int size) {
         uint32_t data = (uint32_t)(CURRENT_STATE.REGS[rt]); // Solo los 32 bits inferiores
         mem_write_32(address, data);
         printf("STUR (32 bits): X%d -> Mem[0x%llx] = 0x%x\n", rt, address, data);
+        printf("Chequeo de si se guardo en Mem[0x%llx]: %hhx\n", address, mem_read_32(address));
     } else if (size == 3) { // 64-bit double word
         uint64_t data = CURRENT_STATE.REGS[rt]; // Almacenar 64 bits completos
         mem_write_64(address, data);
         printf("STUR (64 bits): X%d -> Mem[0x%llx] = 0x%llx\n", rt, address, data);
+        printf("Chequeo de si se guardo en Mem[0x%llx]: %llx\n", address, mem_read_64(address));
     } else {
         printf("Error: Tamaño inválido en STUR (size=%d)\n", size);
     }
 
     // Depuración
     printf("STUR Execution:\n");
-    // printf("Register X%d contains data: 0x%llx\n", rt, data);
+    // quiero imprimir rt, rn, imm9, size
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -847,9 +904,16 @@ void sturb(int rt, int rn, int imm9, int size) {
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
     uint64_t data = CURRENT_STATE.REGS[rt] & 0xFF;
     mem_write_8(address, data);
+    printf("Mem[%llx] = %02llx\n", address, data);
+    printf("Chequeo de si se guardo en Mem[0x%llx]: %hhx\n", address, mem_read_8(address));
+
 
     // Depuración
     printf("STURB (Store Byte) Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
     printf("Register X%d contains data: 0x%llx\n", rt, data);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
@@ -897,6 +961,10 @@ void ldur(int rt, int rn, int imm9, int size) {
 
     // Depuración
     printf("LDUR Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -915,6 +983,10 @@ void ldurh(int rt, int rn, int imm9, int size) {
     // Depuración
     printf("LDURH: Mem[0x%llx] -> W%d = 0x%04x\n", address, rt, data);
     printf("LDURH Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -933,6 +1005,10 @@ void ldurb(int rt, int rn, int imm9, int size) {
     // Depuración
     printf("LDURB: Mem[0x%llx] -> W%d = 0x%02x\n", address, rt, data);
     printf("LDURB Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
