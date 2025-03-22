@@ -721,7 +721,8 @@ void execute_br(uint8_t rn) {
 
 void execute_b_cond(uint32_t imm19, uint8_t condition) { 
     int64_t offset = ((int64_t)imm19 << 2); 
-    
+    printf("IMM19: %d\n", imm19);
+    printf("OFFSET: %lld\n", offset);
     if (imm19 & (1 << 18)) { // Si el bit 18 está encendido, es negativo
         offset |= 0xFFFFFFFFFFF80000; 
     }
@@ -729,7 +730,9 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     
     bool cond;
     switch (condition) {
-        case 0x0: cond = CURRENT_STATE.FLAG_Z; break;  // BEQ (Z == 1)
+        case 0x0: cond = CURRENT_STATE.FLAG_Z; 
+            printf("ENTROOOOO Z: %d\n", CURRENT_STATE.FLAG_Z);
+            // break;  // BEQ (Z == 1)
         case 0x1: cond = !CURRENT_STATE.FLAG_Z; break; // BNE (Z == 0)
         case 0xA: cond = !CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // BGT (N == 0 && Z == 0)
         case 0xB: cond = CURRENT_STATE.FLAG_N; break; // BLT (N == 1)
@@ -742,6 +745,8 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     }
     if (cond) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+        printf("CURRENT: PC: 0x%llx\n", CURRENT_STATE.PC);  // Depuración
+        printf("SALTO: Nueva PC: 0x%llx\n", NEXT_STATE.PC);  // Depuración
     } else {
         NEXT_STATE.PC = CURRENT_STATE.PC + 4; 
     }
