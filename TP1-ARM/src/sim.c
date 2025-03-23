@@ -780,36 +780,36 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
 }
 
 
-// void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
-//     uint64_t operand1 = CURRENT_STATE.REGS[rn];
-//     uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
-//     // uint64_t shift = (imms - immr) & 0x3F;  // Equivalente a % 64
-//     if (shift > 63) {
-//         printf("Error: shift demasiado grande\n");
-//         return;
-//     }
-//     uint64_t result = operand1 << shift;
-//     // uint32_t shift = immr - imms;
-
-    
-//     // uint64_t operand1 = CURRENT_STATE.REGS[rn];
-//     // uint64_t result = operand1 << shift;
-    
-//     update_flags(result);
-//     NEXT_STATE.REGS[rd] = result;
-
-//     // Depuracion 
-//     printf("operand1: %llu\n", operand1);
-//     printf("shift: %llu\n", shift);
-//     printf("result: %llu\n", result);
-//     printf("rd: %d\n", rd);
-//     printf("rn: %d\n", rn);
-//     printf("imms: %d\n", imms);
-//     printf("immr: %d\n", immr);
-//     printf("n: %d\n", n);
-// }
-
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
+    uint64_t operand1 = CURRENT_STATE.REGS[rn];
+    uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
+    // uint64_t shift = (imms - immr) & 0x3F;  // Equivalente a % 64
+    if (shift > 63) {
+        printf("Error: shift demasiado grande\n");
+        return;
+    }
+    uint64_t result = operand1 << shift;
+    // uint32_t shift = immr - imms;
+
+    
+    // uint64_t operand1 = CURRENT_STATE.REGS[rn];
+    // uint64_t result = operand1 << shift;
+    
+    update_flags(result);
+    NEXT_STATE.REGS[rd] = result;
+
+    // Depuracion 
+    printf("operand1: %llu\n", operand1);
+    printf("shift: %llu\n", shift);
+    printf("result: %llu\n", result);
+    printf("rd: %d\n", rd);
+    printf("rn: %d\n", rn);
+    printf("imms: %d\n", imms);
+    printf("immr: %d\n", immr);
+    printf("n: %d\n", n);
+}
+
+/* void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     // Si el SF (signed flag) es 1, entonces trabajamos con 64 bits
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint32_t shift = imms & 0x3F;  // Aseguramos que tomamos los 6 bits menos significativos
@@ -825,7 +825,7 @@ void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     printf("operand1 (X%d): 0x%llx\n", rn, operand1);
     printf("shift: %u\n", shift);
     printf("result (X%d): 0x%llx\n", rd, result);
-}
+} */
 
 
 
