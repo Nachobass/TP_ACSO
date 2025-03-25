@@ -740,15 +740,15 @@ void execute_br(uint8_t rn) {
 }
 
 void execute_b_cond(uint32_t imm19, uint8_t condition) { 
-    int64_t offset = ((int64_t)imm19 << 2); 
+    // int64_t offset = ((int64_t)imm19 << 2); 
+    int64_t offset = (((int64_t)imm19 << 45) >> 45) << 2;
     printf("IMM19: %d\n", imm19);
     printf("OFFSET: %lld\n", offset);
-    if (imm19 & (1 << 18)) { // Si el bit 18 está encendido, es negativo
-        offset |= 0xFFFFFFFFFFF80000; 
-    }
+    // if (imm19 & (1 << 18)) { // Si el bit 18 está encendido, es negativo
+    //     offset |= 0xFFFFFFFFFFF80000; 
+    // }
     
-    
-    bool cond;
+    bool cond = false;
     switch (condition) {
         case 0x0: cond = CURRENT_STATE.FLAG_Z; 
             printf("ENTROOOOO Z: %d\n", CURRENT_STATE.FLAG_Z);
@@ -778,6 +778,7 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     printf("Condition: 0x%x\n", condition);
 
 }
+
 
 
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
