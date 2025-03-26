@@ -220,13 +220,23 @@ void process_instruction() {
             instruction_table[i].opcode == opCode22) {   // Para instrucciones de 22 bits
 
             instruction_table[i].handler(instruction);  // Ejecutar función asociada
-            NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+            // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+            // return;
+            // Solo avanzar el PC si la instrucción no lo modificó (evita sobrescribir saltos)
+            if (NEXT_STATE.PC == CURRENT_STATE.PC) {
+                NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+            }
+            
             return;
         }
     }
 
     printf("Error: opcode no reconocido\n");
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    // Solo avanzar el PC si la instrucción no lo modificó
+    if (NEXT_STATE.PC == CURRENT_STATE.PC) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
 }
 
 
@@ -829,7 +839,6 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
 }
 
 
-
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
@@ -1122,10 +1131,8 @@ void mul(int rd, int rn, int rm) {
 
 void cbz(int rt, int imm19) {
     uint64_t operand = CURRENT_STATE.REGS[rt];
-
     // Sign-extend imm19 a 64 bits y multiplicar por 4
     int64_t offset = (((int64_t)imm19 << 45) >> 45) << 2;
-
     // Si el registro es cero, actualizar el PC
     if (operand == 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
@@ -1137,11 +1144,14 @@ void cbz(int rt, int imm19) {
 
     // Depuración
     printf("CBZ Execution:\n");
+    printf("Rt: %d, Imm19: %d\n", rt, imm19);
     printf("Register X%d contains value: 0x%llx\n", rt, operand);
     printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
-    printf("Offset: %lld (0x%llx)\n", offset, offset);
     printf("New PC: 0x%llx\n", NEXT_STATE.PC);
+    printf("Offset: %lld (0x%llx)\n", offset, offset);
+    // printf("New PC: 0x%llx\n", NEXT_STATE.PC);
 }
+
 
 void cbnz(int rt, int imm19) {
     uint64_t operand = CURRENT_STATE.REGS[rt];
@@ -1161,6 +1171,7 @@ void cbnz(int rt, int imm19) {
     printf("CBNZ Execution:\n");
     printf("Register X%d contains value: 0x%llx\n", rt, operand);
     printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
+    printf("New PC: 0x%llx\n", NEXT_STATE.PC);
     printf("Offset: %lld (0x%llx)\n", offset, offset);
     printf("New PC: 0x%llx\n", NEXT_STATE.PC);
 }
