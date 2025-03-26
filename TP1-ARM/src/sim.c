@@ -14,6 +14,14 @@ void mem_write_64(uint64_t address, uint64_t value) {
 
     // Escribir la parte alta (32 bits más significativos)
     mem_write_32(address + 4, (uint32_t)((value >> 32) & 0xFFFFFFFF));
+    // uint32_t low = (uint32_t)(value & 0xFFFFFFFF);
+    // uint32_t high = (uint32_t)((value >> 32) & 0xFFFFFFFF);
+
+    // printf("mem_write_64: Escribiendo 0x%08x en 0x%llx\n", low, address);
+    // mem_write_32(address, low);
+
+    // printf("mem_write_64: Escribiendo 0x%08x en 0x%llx\n", high, address + 4);
+    // mem_write_32(address + 4, high);
 }
 
 uint64_t mem_read_64(uint64_t address) {
@@ -31,6 +39,43 @@ uint64_t mem_read_64(uint64_t address) {
 
     return value;
 }
+
+/* uint64_t mem_read_64(uint64_t address) {
+    if (address % 8 != 0) {
+        printf("Error: Dirección 0x%llx no alineada a 8 bytes en mem_read_64\n", address);
+        return 0;
+    }
+
+    uint32_t low = mem_read_32(address);
+    uint32_t high = mem_read_32(address + 4);
+
+    uint64_t value = ((uint64_t)high << 32) | low;
+
+    // Depuración
+    printf("mem_read_64: Leyendo desde 0x%llx -> LOW: 0x%08x HIGH: 0x%08x -> VALUE: 0x%llx\n", 
+            address, low, high, value);
+
+    return value;
+} */
+
+/* uint64_t mem_read_64(uint64_t address) {
+    // Ajustar dirección a la base de memoria del simulador
+    address += 0x10000000;
+
+    if (address % 8 != 0) {
+        printf("Error: Dirección 0x%llx no alineada a 8 bytes en mem_read_64\n", address);
+        return 0;
+    }
+
+    uint32_t low = mem_read_32(address);
+    uint32_t high = mem_read_32(address + 4);
+    uint64_t value = ((uint64_t)high << 32) | low;
+
+    printf("mem_read_64: Leyendo desde 0x%llx -> LOW: 0x%08x HIGH: 0x%08x -> VALUE: 0x%llx\n", 
+            address, low, high, value);
+
+    return value;
+} */
 
 void mem_write_16(uint64_t address, uint16_t value) {
     // Calcular la dirección base alineada a 4 bytes
@@ -810,26 +855,6 @@ void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     printf("n: %d\n", n);
 }
 
-/* void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
-    // Si el SF (signed flag) es 1, entonces trabajamos con 64 bits
-    uint64_t operand1 = CURRENT_STATE.REGS[rn];
-    uint32_t shift = imms & 0x3F;  // Aseguramos que tomamos los 6 bits menos significativos
-
-    // Desplazar operand1 a la izquierda por el número de bits especificado en imms
-    uint64_t result = operand1 << shift;
-
-    // Guardamos el resultado en el registro de destino (rd)
-    NEXT_STATE.REGS[rd] = result;
-
-    // Depuración
-    printf("LSL Immediate:\n");
-    printf("operand1 (X%d): 0x%llx\n", rn, operand1);
-    printf("shift: %u\n", shift);
-    printf("result (X%d): 0x%llx\n", rd, result);
-} */
-
-
-
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
@@ -865,7 +890,7 @@ void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     printf("Data stored: 0x%llx\n", data);
 } */
 
-void stur(int rt, int rn, int imm9, int size) {
+/* void stur(int rt, int rn, int imm9, int size) {
     // Sign-extend imm9 a 64 bits (para manejar valores negativos correctamente)
     // int64_t offset = (int64_t)((imm9 << 55) >> 55);  
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
@@ -896,9 +921,40 @@ void stur(int rt, int rn, int imm9, int size) {
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
     // printf("Data stored: 0x%llx\n", data);
+} */
+
+void stur(int rt, int rn, int imm9, int size) {
+    int64_t offset = (((int64_t)imm9 << 55) >> 55);
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+
+    // Ajustar dirección a la base de memoria del simulador
+    address += 0x10000000;
+
+    if (size == 3) {  // 64-bit double word
+        uint64_t data = CURRENT_STATE.REGS[rt];
+
+        printf("STUR (64 bits): X%d -> Mem[0x%llx] = 0x%llx\n", rt, address, data);
+        mem_write_64(address, data);
+
+        // Verificación
+        uint64_t read_back = mem_read_64(address);
+        printf("Verificación: Mem[0x%llx] -> 0x%llx (debería ser 0x%llx)\n", 
+                address, read_back, data);
+    }
+
+    // Depuración
+    printf("STUR Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %lld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
 }
 
-void sturb(int rt, int rn, int imm9, int size) {
+
+/* void sturb(int rt, int rn, int imm9, int size) {
     // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
     // int64_t offset = (int64_t)((imm9 << 55) >> 55);  
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
@@ -920,9 +976,34 @@ void sturb(int rt, int rn, int imm9, int size) {
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
     printf("Data stored: 0x%llx\n", data);
+} */
+
+void sturb(int rt, int rn, int imm9, int size) {
+    int64_t offset = (((int64_t)imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+
+    // Ajustar dirección base a la memoria del simulador
+    address += 0x10000000;
+
+    uint8_t data = (uint8_t)(CURRENT_STATE.REGS[rt]);  // Solo los 8 bits menos significativos
+
+    // Escribir en memoria
+    mem_write_8(address, data);
+
+    // Verificar si el valor se guardó correctamente
+    uint8_t read_back = mem_read_8(address);
+    printf("STURB (Store Byte) Execution:\n");
+    printf("Mem[0x%llx] = 0x%02x (debería ser 0x%02x)\n", address, read_back, data);
+
+    // Depuración
+    printf("rt: %d, rn: %d, imm9: %d, size: %d\n", rt, rn, imm9, size);
+    printf("Register X%d contains data: 0x%llx\n", rt, CURRENT_STATE.REGS[rt]);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %lld\n", offset);
+    printf("Memory address (ajustada): 0x%llx\n", address);
 }
 
-void sturh(int rt, int rn, int imm9, int size) {
+/* void sturh(int rt, int rn, int imm9, int size) {
     // Sign-extend imm9 a 64 bits (maneja valores negativos correctamente)
     // int64_t offset = (int64_t)((imm9 << 55) >> 55);  
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
@@ -939,8 +1020,9 @@ void sturh(int rt, int rn, int imm9, int size) {
     printf("Data stored: 0x%llx\n", data);
 }
 
+ */
 // if (size == 2 || size == 3) {  //  (LDUR)
-void ldur(int rt, int rn, int imm9, int size) {
+/* void ldur(int rt, int rn, int imm9, int size) {
     // Sign-extend imm9 a 64 bits (para manejar valores negativos correctamente)
     // int64_t offset = (int64_t)((imm9 << 55) >> 55);  
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
@@ -972,8 +1054,9 @@ void ldur(int rt, int rn, int imm9, int size) {
     printf("Data loaded: 0x%llx\n", data);
 }
 
+ */
 // if (size == 1) {  // 16-bit (LDURH)
-void ldurh(int rt, int rn, int imm9, int size) {
+/* void ldurh(int rt, int rn, int imm9, int size) {
     // Extender signo de imm9 (manejar valores negativos)
     // int64_t offset = (int64_t)((imm9 << 55) >> 55);
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
@@ -993,9 +1076,9 @@ void ldurh(int rt, int rn, int imm9, int size) {
     printf("Memory address: 0x%llx\n", address);
     printf("Data loaded: 0x%hx\n", data);
 }
-
+ */
     // if (size == 0) {  // 8-bit (LDURB)
-void ldurb(int rt, int rn, int imm9, int size) {
+/* void ldurb(int rt, int rn, int imm9, int size) {
     // Extender signo de imm9 (manejar valores negativos)
     // int64_t offset = (int64_t)((imm9 << 55) >> 55);
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
@@ -1016,8 +1099,109 @@ void ldurb(int rt, int rn, int imm9, int size) {
     printf("Data loaded: 0x%hhx\n", data);
 }
 
+ */
 // solo implementamos con hw=0, es decir shift=0
-void movz(int rd, int imm16, int hw){
+
+void sturh(int rt, int rn, int imm9, int size) {
+    int64_t offset = (((int64_t)imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+
+    // Ajustar dirección base
+    address += 0x10000000;
+
+    uint16_t data = (uint16_t)(CURRENT_STATE.REGS[rt] & 0xFFFF);
+    mem_write_16(address, data);
+
+    printf("STURH (Store Halfword): Mem[0x%llx] = 0x%04x\n", address, data);
+    // Depuración
+    printf("STURH (Store Halfword) Execution:\n");
+    printf("Register X%d contains data: 0x%hx\n", rt, data);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %lld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data stored: 0x%hx\n", data);
+}
+
+void ldur(int rt, int rn, int imm9, int size) {
+    int64_t offset = (((int64_t)imm9 << 55) >> 55);  
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+
+    // Ajustar dirección base
+    address += 0x10000000;
+
+    uint64_t data;
+    if (size == 2) {  // 32-bit
+        data = mem_read_32(address);
+        printf("LDUR (32 bits): Mem[0x%llx] -> X%d = 0x%llx\n", address, rt, data);
+    } else if (size == 3) {  // 64-bit
+        data = mem_read_64(address);
+        printf("LDUR (64 bits): Mem[0x%llx] -> X%d = 0x%llx\n", address, rt, data);
+    }
+
+    NEXT_STATE.REGS[rt] = data;
+
+    // Depuración
+    printf("LDUR Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %lld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data loaded: 0x%llx\n", data);
+}
+
+void ldurh(int rt, int rn, int imm9, int size) {
+    int64_t offset = (((int64_t)imm9 << 55) >> 55);
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+
+    // Ajustar dirección base
+    address += 0x10000000;
+
+    uint16_t data = mem_read_16(address);
+    NEXT_STATE.REGS[rt] = (uint64_t)data;
+
+    printf("LDURH: Mem[0x%llx] -> W%d = 0x%04x\n", address, rt, data);
+    // Depuración
+    printf("LDURH: Mem[0x%llx] -> W%d = 0x%04x\n", address, rt, data);
+    printf("LDURH Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %lld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data loaded: 0x%hx\n", data);
+}
+
+void ldurb(int rt, int rn, int imm9, int size) {
+    int64_t offset = (((int64_t)imm9 << 55) >> 55);
+    uint64_t address = CURRENT_STATE.REGS[rn] + offset;
+
+    // Ajustar dirección base
+    address += 0x10000000;
+
+    uint8_t data = mem_read_8(address);
+    NEXT_STATE.REGS[rt] = (uint64_t)data;
+
+    printf("LDURB: Mem[0x%llx] -> W%d = 0x%02x\n", address, rt, data);
+    // Depuración
+    printf("LDURB: Mem[0x%llx] -> W%d = 0x%02x\n", address, rt, data);
+    printf("LDURB Execution:\n");
+    printf("rt: %d\n", rt);
+    printf("rn: %d\n", rn);
+    printf("imm9: %d\n", imm9);
+    printf("size: %d\n", size);
+    printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
+    printf("Offset (sign-extended): %lld\n", offset);
+    printf("Memory address: 0x%llx\n", address);
+    printf("Data loaded: 0x%hhx\n", data);
+}
+
+
+ void movz(int rd, int imm16, int hw){
     uint64_t imm = (uint64_t)imm16;
     imm <<= (16 * hw);
     NEXT_STATE.REGS[rd] = imm;
