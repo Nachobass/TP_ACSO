@@ -158,8 +158,8 @@ InstructionEntry instruction_table[] = {
     { 0x3C2, handle_ldurh },
     { 0x1C2, handle_ldurb },
     { 0x1A5, handle_movz },
-    { 0x51, handle_add_immediate },
-    { 0x459, handle_add_extended },
+    { 0x91, handle_add_immediate },
+    { 0x8B, handle_add_extended },
     { 0x4D8,handle_mul },
     { 0xB4, handle_cbz },
     { 0xB5, handle_cbnz }
@@ -733,7 +733,7 @@ void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result = operand1 ^ operand2;
     
-    update_flags(result);
+    // update_flags(result);
     NEXT_STATE.REGS[rd] = result;
 
     // Depuracion 
@@ -1071,6 +1071,16 @@ void add_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t result = operand1 + imm;
     update_flags(result);
     NEXT_STATE.REGS[rd] = result;
+
+    // depuracion
+    printf("operand1: %llu\n", operand1);
+    printf("imm: %llu\n", imm);
+    printf("result: %llu\n", result);
+    printf("rd: %d\n", rd);
+    printf("rn: %d\n", rn);
+    printf("imm12: %d\n", imm12);
+    printf("shift: %d\n", shift);
+
 }
 
 void add_extended(int rd, int rn, int imm3, int option, int rm){
