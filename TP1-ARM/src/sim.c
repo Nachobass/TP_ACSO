@@ -442,7 +442,7 @@ void handle_add_immediate(uint32_t instruction) {
 }
 
 void handle_add_extended(uint32_t instruction) {
-    uint32_t rm = (instruction >> 16) & 0xF;
+    uint32_t rm = (instruction >> 16) & 0x1F;
     uint32_t option = (instruction >> 13) & 0x7;
     uint32_t imm3 = (instruction >> 10) & 0x7;
     uint32_t rn = (instruction >> 5) & 0x1F;
@@ -1083,33 +1083,77 @@ void add_immediate(int rd, int rn, uint32_t imm12, int shift) {
 
 }
 
-void add_extended(int rd, int rn, int imm3, int option, int rm){
-    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
-    uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
+// void add_extended(int rd, int rn, int imm3, int option, int rm){
+//     uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
+//     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
+//     switch (option) {
+//         case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
+//         case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
+//         case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
+//         case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
+//         case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
+//         case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
+//         case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
+//         case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+//         default:
+//             printf("Error: opción de extensión inválida (%d)\n", option);
+//             return;
+//     }
+
+//     // Aplicar el desplazamiento (imm3 debe estar entre 0 y 4)
+//     if (imm3 > 4) {
+//         printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
+//         return;
+//     }
+//     operand2 <<= imm3;
+
+//     uint64_t result = operand1 + operand2;
+//     NEXT_STATE.REGS[rd] = result;
+
+//     // Depuración
+//     printf("operand1: %llu\n", operand1);
+//     printf("operand2 (extendido y desplazado): %llu\n", operand2);
+//     printf("result: %llu\n", result);
+//     printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
+
+// }
+
+void add_extended(int rd, int rn, int imm3, int option, int rm) {
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];
+    uint64_t operand2 = CURRENT_STATE.REGS[rm];  
+
+    // Aplicar la extensión según "option"
     switch (option) {
-        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
-        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
-        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
-        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
-        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
-        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
-        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
-        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB
+        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH
+        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW
+        case 0b011: break;  // UXTX (sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB
+        case 0b101: operand2 = (int16_t)operand2; break; // SXTH
+        case 0b110: operand2 = (int32_t)operand2; break; // SXTW
+        case 0b111: break;  // SXTX (sin cambios)
         default:
             printf("Error: opción de extensión inválida (%d)\n", option);
             return;
     }
 
-    // Aplicar el desplazamiento (imm3 debe estar entre 0 y 4)
-    if (imm3 > 4) {
-        printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
+    // Validar el rango de imm3 según la extensión
+    if ((option <= 0b001 || option >= 0b100) && imm3 > 4) {  
+        printf("Error: imm3 inválido (%d) para UXTB, UXTH, SXTB o SXTH\n", imm3);
         return;
     }
-    operand2 <<= imm3;
+    if ((option == 0b010 || option == 0b110) && imm3 > 6) {  
+        printf("Error: imm3 inválido (%d) para UXTW o SXTW\n", imm3);
+        return;
+    }
+
+    // Aplicar desplazamiento solo si imm3 > 0
+    if (imm3 > 0) {
+        operand2 <<= imm3;
+    }
 
     uint64_t result = operand1 + operand2;
-    update_flags(result);
     NEXT_STATE.REGS[rd] = result;
 
     // Depuración
@@ -1117,8 +1161,8 @@ void add_extended(int rd, int rn, int imm3, int option, int rm){
     printf("operand2 (extendido y desplazado): %llu\n", operand2);
     printf("result: %llu\n", result);
     printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
-
 }
+
 
 
 void mul(int rd, int rn, int rm) {
