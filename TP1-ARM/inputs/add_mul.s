@@ -4,6 +4,7 @@ mov X1, 5
 add X2, X1, 3  // X2 = X1 + 3
 
 // Test para ADD Extended
+mov X3, 4
 mov X4, 2
 add X5, X3, X4, LSL 1  // X5 = X3 + (X4 << 1) = 4 + (2 * 2) = 8     RARO ME DA 6
 
