@@ -8,4 +8,4 @@ mov x3, #7             // Código que no se ejecutará
 jump_target:
 mov x0, #42            // Código que se ejecuta después del salto
 mov x8, #93            // syscall: exit
-svc #0                 // Salir del programa
+HLT 0                 // Salir del programa
