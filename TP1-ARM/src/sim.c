@@ -770,7 +770,7 @@ void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     }    
     
     NEXT_STATE.REGS[rd] = result;
-    update_flags(result);
+    // update_flags(result);
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
