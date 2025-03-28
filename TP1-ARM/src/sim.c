@@ -739,13 +739,38 @@ void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     printf("shift: %d\n", shift);
 }
 
+// void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
+//     uint64_t operand1 = CURRENT_STATE.REGS[rn];
+//     uint64_t operand2 = CURRENT_STATE.REGS[rm];
+//     uint64_t result = operand1 | operand2;
+    
+//     update_flags(result);
+//     NEXT_STATE.REGS[rd] = result;
+
+//     // Depuracion 
+//     printf("operand1: %llu\n", operand1);
+//     printf("operand2: %llu\n", operand2);
+//     printf("result: %llu\n", result);
+//     printf("rd: %d\n", rd);
+//     printf("rn: %d\n", rn);
+//     printf("imm6: %d\n", imm6);
+//     printf("rm: %d\n", rm);
+//     printf("n: %d\n", n);
+//     printf("shift: %d\n", shift);
+// }
+
 void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
-    uint64_t result = operand1 | operand2;
+    uint64_t result;
+    if( rn == 31 ){    
+        result = operand2;
+    } else {
+        result = operand1 | operand2;
+    }    
     
-    update_flags(result);
     NEXT_STATE.REGS[rd] = result;
+    update_flags(result);
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
