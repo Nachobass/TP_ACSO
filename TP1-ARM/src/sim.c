@@ -279,7 +279,7 @@ void handle_subs_immediate(uint32_t instruction) {
 }
 
 void handle_subs_extended(uint32_t instruction) {
-    uint32_t rm = (instruction >> 16) & 0xF;
+    uint32_t rm = (instruction >> 16) & 0x1F;
     uint32_t option = (instruction >> 13) & 0x7;
     uint32_t imm3 = (instruction >> 10) & 0x7;
     uint32_t rn = (instruction >> 5) & 0x1F;
