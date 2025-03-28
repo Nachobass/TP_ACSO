@@ -1,11 +1,15 @@
-.text
+.section .text
+.global _start
 
-mov x1, jump_target    // Cargar la dirección de salto en X1
-br x1                  // Saltar a la dirección en X1
-mov x3, #7             // Código que no se ejecutará
+_start:
+    // Simulamos una llamada a función
+    BL funcion           // Salta y guarda PC+4 en X30
 
+    // Esto se ejecuta cuando regresamos de la función
+    ADDS X5, X4, #7      // X1 = 1
+    HLT #0
 
-jump_target:
-mov x0, #42            // Código que se ejecuta después del salto
-mov x8, #93            // syscall: exit
-HLT 0                 // Salir del programa
+// Función que se salta
+funcion:
+    ADDS X6, X4, #2      // X2 = 2 (se ejecuta si BL funcionó)
+    BR X30               // Volver a la instrucción después del BL
