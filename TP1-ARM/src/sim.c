@@ -160,7 +160,7 @@ InstructionEntry instruction_table[] = {
     { 0x1A5, handle_movz },
     { 0x91, handle_add_immediate },
     { 0x8B, handle_add_extended },
-    { 0x4D8,handle_mul },
+    { 0x9B,handle_mul },
     { 0xB4, handle_cbz },
     { 0xB5, handle_cbnz }
     
@@ -452,7 +452,7 @@ void handle_add_extended(uint32_t instruction) {
 }
 
 void handle_mul(uint32_t instruction) {
-    uint32_t rm = (instruction >> 16) & 0xF;
+    uint32_t rm = (instruction >> 16) & 0x1F;
     uint32_t rn = (instruction >> 5) & 0x1F;
     uint32_t rd = instruction & 0x1F;
     mul(rd, rn, rm);
@@ -804,16 +804,12 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     
     bool cond = false;
     switch (condition) {
-        case 0x0: cond = CURRENT_STATE.FLAG_Z; break;                      // AGREGO EL BREAK??????
-            // printf("ENTROOOOO Z: %d\n", CURRENT_STATE.FLAG_Z);
-            // break;  // BEQ (Z == 1)
-        case 0x1: cond = !CURRENT_STATE.FLAG_Z; break; // BNE (Z == 0)
-        case 0xA: cond = !CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // BGT (N == 0 && Z == 0)
-        case 0xB: cond = CURRENT_STATE.FLAG_N; 
-            printf("BLT\n");
-            break; // BLT (N == 1)
-        case 0xC: cond = !CURRENT_STATE.FLAG_N; break; // BGE (N == 0)
-        case 0xD: cond = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N; break; // BLE (Z == 1 || N == 1)
+        case 0x0: cond = CURRENT_STATE.FLAG_Z; break;                            // BEQ (Z == 1)
+        case 0x1: cond = !CURRENT_STATE.FLAG_Z; break;                           // BNE (Z == 0)
+        case 0xC: cond = !CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break;  // BGT (N == 0 && Z == 0)
+        case 0xB: cond = CURRENT_STATE.FLAG_N; break;                            // BLT (N == 1)
+        case 0xA: cond = !CURRENT_STATE.FLAG_N; break;                           // BGE (N == 0)
+        case 0xD: cond = CURRENT_STATE.FLAG_Z || CURRENT_STATE.FLAG_N; break;    // BLE (Z == 1 || N == 1)
         default:
             printf("Error: condición inválida (%d)\n", condition);
             return;
@@ -841,7 +837,7 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
 
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
-    uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
+    uint64_t shift = 64 - immr;
     if (shift > 63) {
         printf("Error: shift demasiado grande\n");
         return;
@@ -865,7 +861,7 @@ void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
 
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
-    uint64_t shift = (immr & 0x3F) - (imms & 0x3F);
+    uint64_t shift = immr;
     uint64_t result = operand1 >> shift;
     
     update_flags(result);
@@ -885,9 +881,6 @@ void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
 void stur(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
-
-    // Ajustar dirección a la base de memoria del simulador
-    address += 0x10000000;
 
     if (size == 3) {  // 64-bit double word
         uint64_t data = CURRENT_STATE.REGS[rt];
@@ -916,9 +909,6 @@ void sturb(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
 
-    // Ajustar dirección base a la memoria del simulador
-    address += 0x10000000;
-
     uint8_t data = (uint8_t)(CURRENT_STATE.REGS[rt]);  // Solo los 8 bits menos significativos
 
     // Escribir en memoria
@@ -942,9 +932,6 @@ void sturh(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
 
-    // Ajustar dirección base
-    address += 0x10000000;
-
     uint16_t data = (uint16_t)(CURRENT_STATE.REGS[rt] & 0xFFFF);
     mem_write_16(address, data);
 
@@ -961,9 +948,6 @@ void sturh(int rt, int rn, int imm9, int size) {
 void ldur(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
-
-    // Ajustar dirección base
-    address += 0x10000000;
 
     uint64_t data;
     if (size == 2) {  // 32-bit
@@ -992,9 +976,6 @@ void ldurh(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
 
-    // Ajustar dirección base
-    address += 0x10000000;
-
     uint16_t data = mem_read_16(address);
     NEXT_STATE.REGS[rt] = (uint64_t)data;
 
@@ -1016,8 +997,6 @@ void ldurb(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
 
-    // Ajustar dirección base
-    address += 0x10000000;
 
     uint8_t data = mem_read_8(address);
     NEXT_STATE.REGS[rt] = (uint64_t)data;
