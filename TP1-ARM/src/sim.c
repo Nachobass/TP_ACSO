@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
-#include "shell.h"  // nose si se puede
+#include "shell.h"
 
 
 // NUM_INSTRUCTIONS = 28;
@@ -364,15 +364,6 @@ void handle_lsl_immediate(uint32_t instruction) {
         printf("LSL IMMEDIATE ejecutado\n");
     }
 }
-
-/* void handle_lsr_immediate(uint32_t instruction) {
-    uint32_t immr = (instruction >> 16) & 0x3F;
-    uint32_t imms = (instruction >> 10) & 0x3F;
-    uint32_t rn = (instruction >> 5) & 0x1F;
-    uint32_t rd = instruction & 0x1F;
-    lsr_immediate(rd, rn, imms, immr, 0);
-    printf("LSR IMMEDIATE ejecutado\n");
-} */
 
 void handle_stur(uint32_t instruction) {
     uint32_t size = (instruction >> 30) & 0x3;
