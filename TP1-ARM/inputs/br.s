@@ -4,7 +4,7 @@
 _start:
     // Calculamos la dirección de return_point sumando un offset al PC
     MOV X30, X30          // Asegurar que X30 no tenga basura (opcional)
-    ADD X30, X30, #12     // X30 = dirección de return_point (ajustar el offset según sea necesario)
+    ADD X30, X30, #0x00400012     // X30 = dirección de return_point (ajustar el offset según sea necesario)
     B funcion             // Salta a "funcion"
 
 return_point:
