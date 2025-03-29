@@ -9,5 +9,8 @@ cmp X22, X23
 mov X24, #90
 mov X25, #50
 cmp X24, X25
+mov X31, #10
+cmp X31, #10
+cmp X31, #0
 
 HLT 0
