@@ -33,15 +33,14 @@ case_not_equal:
 case_greater:
     adds    X18, X0, #3    // Se ejecuta
 
-//BLT: Salta si X19 < X20 (Probamos con dos valores negativos)
-    movz    X19, 0xFFFE    // -2 en complemento a dos
-    movz    X20, 0xFFFF    // -1 en complemento a dos
+// BLT: Salta si X19 < X20 (usamos valores positivos en lugar de negativos)
+    movz    X19, 10    // X19 = 10
+    movz    X20, 15    // X20 = 15
     cmp     X19, X20
     blt     case_less
     adds    X21, X0, #66   // No se ejecuta
-
 case_less:
-    adds    X21, X0, #4    // Se ejecuta
+    adds    X21, X0, #99   // Se ejecuta
 
 //BGE: Salta si X22 >= X23 (Probamos con dos números iguales, grandes)
     movz    X22, 5000
