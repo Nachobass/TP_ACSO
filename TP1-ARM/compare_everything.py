@@ -1,16 +1,18 @@
+# TO RUN:
+# chmod +x compare_everything.py
+# python3 compare_everything.py
+
+
 import subprocess
 
-# Lista de nombres de archivo
 file_names = ["add_mul.x", "add.x", "addis.x", "adds-subs.x", "adds.x", "ands.x", "b.x", "beq.x", "bge.x",
               "bgt.x", "ble.x", "blt.x", "bne.x", "br.x", "cbnz.x", "cbz_cbnz.x", "cbz.x", "cmp_ex.x", 
               "cmp.x", "eor.x", "lsl.x", "lsr_lsl.x", "lsr.x", "movz.x", "mul.x", "orr.x", 
               "sturb.x", "subis.x"]
 
-# Mensaje esperado
 expected_message_1 = "✅ No differences found in dumpsim files."
 expected_message_2 = "✅ All simulations returned the same memory dump for the given cycles."
 
-# Variable para verificar si todos cumplen
 all_match = True
 
 for file_name in file_names:
@@ -24,6 +26,14 @@ for file_name in file_names:
         all_match = False
 
 if all_match:
-    print("Todos los archivos devolvieron el mensaje esperado.")
+    print("****************************************")
+    print("****************************************")
+    print("All files returned the expected message.")
+    print("****************************************")
+    print("****************************************")
 else:
-    print("Al menos un archivo no devolvió el mensaje esperado.")
+    print("******************************************************")
+    print("******************************************************")
+    print("At least one file did not return the expected message.")
+    print("******************************************************")
+    print("******************************************************")
