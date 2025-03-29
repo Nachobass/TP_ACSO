@@ -5,7 +5,6 @@
 #include "shell.h"
 
 
-// NUM_INSTRUCTIONS = 28;
 //---------- AUXILIAR FUNCTIONS ----------
 void mem_write_64(uint64_t address, uint64_t value) {
     if (address % 8 != 0) {
@@ -187,8 +186,8 @@ void execute_b_cond(uint32_t imm19, uint8_t condition);
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void stur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void sturb(int rt, int rn, int imm9);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void sturh(int rt, int rn, int imm9);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void sturb(int rt, int rn, int imm9);                     //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void sturh(int rt, int rn, int imm9);                     //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
 void ldur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
 void ldurh(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
 void ldurb(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
@@ -376,19 +375,6 @@ void handle_stur(uint32_t instruction) {
     printf("STUR ejecutado\n");
 }
 
-// void handle_sturb(uint32_t instruction) {
-//     uint32_t size = (instruction >> 30) & 0x3;
-//     uint32_t imm9 = (instruction >> 12) & 0x1FF;
-//     uint32_t rn = (instruction >> 5) & 0x1F;
-//     uint32_t rt = instruction & 0x1F;
-//     if( size == 0b00 ){
-//         sturb(rt, rn, imm9, size);
-//         printf("STURB ejecutado\n");
-//     } else if( size == 0b01 ){
-//         sturh(rt, rn, imm9, size);
-//         printf("STURH ejecutado\n");
-//     }
-// }
 void handle_sturb(uint32_t instruction) {
     uint32_t imm9 = (instruction >> 12) & 0x1FF;
     uint32_t rn = (instruction >> 5) & 0x1F;
