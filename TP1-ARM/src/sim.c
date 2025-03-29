@@ -1118,6 +1118,20 @@ void add_extended(int rd, int rn, int imm3, int option, int rm){
     uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
+    switch (option) {
+        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
+        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
+        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
+        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
+        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
+        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
+        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        default:
+            printf("Error: opción de extensión inválida (%d)\n", option);
+            return;
+    }
+
     uint64_t result = operand1 + operand2;
     NEXT_STATE.REGS[rd] = result;
 
