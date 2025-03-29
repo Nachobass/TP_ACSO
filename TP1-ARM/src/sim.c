@@ -470,12 +470,14 @@ void handle_cbnz(uint32_t instruction) {
 void adds_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
+
+    operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
     
-    if (rn == 31) {
-        operand1 = CURRENT_STATE.REGS[31]; // uso el registro especial XZR/WZR.
-    } else {
-        operand1 = CURRENT_STATE.REGS[rn];
-    }
+    // if (rn == 31) {
+    //     operand1 = CURRENT_STATE.REGS[31]; // uso el registro especial XZR/WZR.
+    // } else {
+    //     operand1 = CURRENT_STATE.REGS[rn];
+    // }
 
     printf("operand1: %llu\n", operand1);
 
@@ -631,6 +633,7 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t imm;
 
     operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
+    // uint64_t operand1 = (rn == 31) ? 0 : CURRENT_STATE.REGS[rn];
 
     printf("operand1: %llu\n", operand1);
 
@@ -646,6 +649,8 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift) {
 
     uint64_t result = operand1 - imm;
     update_flags(result);
+
+    printf("Register x31: %llu\n", CURRENT_STATE.REGS[31]);
 
 
     // Depuracion 
@@ -688,6 +693,8 @@ void cmp_extended(int rd, int rn, int imm3, int option, int rm) {
     uint64_t result = operand1 - operand2;
     
     update_flags(result);
+
+    printf("Register x31: %llu\n", CURRENT_STATE.REGS[31]);
 
     // Depuración
     printf("operand1: %llu\n", operand1);
