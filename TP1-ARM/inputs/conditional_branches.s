@@ -75,16 +75,16 @@ nested_case_1:
     cmp     X29, X28
     bgt     nested_case_2   // X29 > X28 → salta
 
-    adds    X31, X0, #22   // No se ejecuta
+    adds    X1, X0, #22   // No se ejecuta
 
 nested_case_2:
-    adds    X31, X0, #11   // Se ejecuta
+    adds    X1, X0, #11   // Se ejecuta
 
 //Branch incondicional
     b       jump_case
-    adds    X32, X0, #15   // No se ejecuta
+    adds    X2, X0, #15   // No se ejecuta
 
 jump_case:
-    adds    X32, X0, #20   // Se ejecuta
+    adds    X2, X0, #20   // Se ejecuta
 
     hlt     0
