@@ -770,7 +770,6 @@ void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     }    
     
     NEXT_STATE.REGS[rd] = result;
-    // update_flags(result);
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
@@ -1078,7 +1077,7 @@ void add_immediate(int rd, int rn, uint32_t imm12, int shift) {
 
 }
 
-void add_extended(int rd, int rn, int imm3, int option, int rm){
+/* void add_extended(int rd, int rn, int imm3, int option, int rm){
     uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
@@ -1102,6 +1101,24 @@ void add_extended(int rd, int rn, int imm3, int option, int rm){
         return;
     }
     operand2 <<= imm3;
+
+    uint64_t result = operand1 + operand2;
+    NEXT_STATE.REGS[rd] = result;
+
+    // Depuración
+    printf("operand1: %llu\n", operand1);
+    printf("operand2 (extendido y desplazado): %llu\n", operand2);
+    printf("result: %llu\n", result);
+    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
+
+} */
+
+
+void add_extended(int rd, int rn, int imm3, int option, int rm){
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
+    uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
+
+
 
     uint64_t result = operand1 + operand2;
     NEXT_STATE.REGS[rd] = result;
