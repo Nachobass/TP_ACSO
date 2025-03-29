@@ -21,7 +21,7 @@ add     X7, X0, #4, LSL #12 // X7 = X0 + (4 << 12) = 5 + 16384
 // --- ADD Extended ---
 movz    X8, 7
 movz    X9, 3
-    add     X10, X8, X9, SXTB  // X10 = X8 + (X9 extendido como byte con signo)
+add     X10, X8, X9  // X10 = X8 + X9
 
 // --- SUBS Immediate sin Shift ---
 movz    X11, 15
