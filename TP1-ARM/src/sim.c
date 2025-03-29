@@ -129,6 +129,7 @@ void handle_execute_b_cond(uint32_t instruction);
 void handle_lsl_immediate(uint32_t instruction);
 void handle_stur(uint32_t instruction);
 void handle_sturb(uint32_t instruction);
+void handle_sturh(uint32_t instruction);
 void handle_ldur(uint32_t instruction);
 void handle_ldurh(uint32_t instruction);
 void handle_ldurb(uint32_t instruction);
@@ -154,6 +155,7 @@ InstructionEntry instruction_table[] = {
     { 0x1A6, handle_lsl_immediate },
     { 0x7C0, handle_stur },
     { 0x1C0, handle_sturb },
+    { 0x3C0, handle_sturh },
     { 0x7C2, handle_ldur },
     { 0x3C2, handle_ldurh },
     { 0x1C2, handle_ldurb },
@@ -185,8 +187,8 @@ void execute_b_cond(uint32_t imm19, uint8_t condition);
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void stur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void sturb(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void sturh(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void sturb(int rt, int rn, int imm9);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void sturh(int rt, int rn, int imm9);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
 void ldur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
 void ldurh(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
 void ldurb(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
@@ -374,18 +376,33 @@ void handle_stur(uint32_t instruction) {
     printf("STUR ejecutado\n");
 }
 
+// void handle_sturb(uint32_t instruction) {
+//     uint32_t size = (instruction >> 30) & 0x3;
+//     uint32_t imm9 = (instruction >> 12) & 0x1FF;
+//     uint32_t rn = (instruction >> 5) & 0x1F;
+//     uint32_t rt = instruction & 0x1F;
+//     if( size == 0b00 ){
+//         sturb(rt, rn, imm9, size);
+//         printf("STURB ejecutado\n");
+//     } else if( size == 0b01 ){
+//         sturh(rt, rn, imm9, size);
+//         printf("STURH ejecutado\n");
+//     }
+// }
 void handle_sturb(uint32_t instruction) {
-    uint32_t size = (instruction >> 30) & 0x3;
     uint32_t imm9 = (instruction >> 12) & 0x1FF;
     uint32_t rn = (instruction >> 5) & 0x1F;
     uint32_t rt = instruction & 0x1F;
-    if( size == 0b00 ){
-        sturb(rt, rn, imm9, size);
-        printf("STURB ejecutado\n");
-    } else if( size == 0b01 ){
-        sturh(rt, rn, imm9, size);
-        printf("STURH ejecutado\n");
-    }
+    sturb(rt, rn, imm9);
+    printf("STURB ejecutado\n");
+}
+
+void handle_sturh(uint32_t instruction) {
+    uint32_t imm9 = (instruction >> 12) & 0x1FF;
+    uint32_t rn = (instruction >> 5) & 0x1F;
+    uint32_t rt = instruction & 0x1F;
+    sturh(rt, rn, imm9);
+    printf("STURH ejecutado\n");
 }
 
 void handle_ldur(uint32_t instruction) {
@@ -908,7 +925,7 @@ void stur(int rt, int rn, int imm9, int size) {
     printf("Memory address: 0x%llx\n", address);
 }
 
-void sturb(int rt, int rn, int imm9, int size) {
+void sturb(int rt, int rn, int imm9) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
 
@@ -923,7 +940,7 @@ void sturb(int rt, int rn, int imm9, int size) {
     printf("Mem[0x%llx] = 0x%02x (debería ser 0x%02x)\n", address, read_back, data);
 
     // Depuración
-    printf("rt: %d, rn: %d, imm9: %d, size: %d\n", rt, rn, imm9, size);
+    printf("rt: %d, rn: %d, imm9: %d\n", rt, rn, imm9);
     printf("Register X%d contains data: 0x%llx\n", rt, CURRENT_STATE.REGS[rt]);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
@@ -931,7 +948,7 @@ void sturb(int rt, int rn, int imm9, int size) {
 }
 
 // solo implementamos con hw=0, es decir shift=0
-void sturh(int rt, int rn, int imm9, int size) {
+void sturh(int rt, int rn, int imm9) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
 
