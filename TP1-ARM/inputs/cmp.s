@@ -9,8 +9,9 @@ cmp X22, X23
 mov X24, #90
 mov X25, #50
 cmp X24, X25
-mov X31, #10
-cmp X31, #10
-cmp X31, #0
+
+// Verificación de XZR
+cmp X31, #10        // 0 - 0
+cmp X31, #0         // 0 - 10 (debería establecer el flag de negativo)
 
 HLT 0
