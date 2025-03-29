@@ -106,6 +106,9 @@ static void update_flags(int64_t result) {
     NEXT_STATE.FLAG_N = (result < 0);
 }
 
+void update_state() {
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
 typedef struct {
     uint32_t opcode;            // Opcode de la instrucción
     void (*handler)(uint32_t);  // Función que maneja la instrucción
@@ -225,7 +228,8 @@ void process_instruction() {
             // return;
             // Solo avanzar el PC si la instrucción no lo modificó (evita sobrescribir saltos)
             if (NEXT_STATE.PC == CURRENT_STATE.PC) {
-                NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+                // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+                update_state();
             }
             
             return;
@@ -236,7 +240,8 @@ void process_instruction() {
     // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Solo avanzar el PC si la instrucción no lo modificó
     if (NEXT_STATE.PC == CURRENT_STATE.PC) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+        // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+        update_state();
     }
 }
 
@@ -829,7 +834,8 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
 
     } else {
         printf("No salta: Condición no cumplida, avanzando PC normal.\n");
-        NEXT_STATE.PC = CURRENT_STATE.PC + 4; 
+        // NEXT_STATE.PC = CURRENT_STATE.PC + 4; 
+        update_state();
     }
     
     // Depuración
@@ -1162,7 +1168,8 @@ void cbz(int rt, int imm19) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
         printf("CBZ: X%d == 0, salto a 0x%llx\n", rt, NEXT_STATE.PC);
     } else {
-        NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
+        // NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
+        update_state();
         printf("CBZ: X%d != 0, no salta\n", rt);
     }
 
@@ -1187,7 +1194,8 @@ void cbnz(int rt, int imm19) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
         printf("CBNZ: X%d != 0, salto a 0x%llx\n", rt, NEXT_STATE.PC);
     } else {
-        NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
+        // NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
+        update_state();
         printf("CBNZ: X%d == 0, no salta\n", rt);
     }
 
