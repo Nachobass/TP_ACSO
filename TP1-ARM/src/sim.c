@@ -480,9 +480,9 @@ void adds_immediate(int rd, int rn, uint32_t imm12, int shift) {
     printf("operand1: %llu\n", operand1);
 
     // Solo se permiten shifts 0 y 1 según el manual de ARM
-    if (shift == 0) {
+    if (shift == 0b00) {
         imm = imm12;  // LSL #0 (sin desplazamiento)
-    } else if (shift == 1) {
+    } else if (shift == 0b01) {
         imm = imm12 << 12;  // LSL #12 (desplazamiento de 12 bits)
     } else {
         printf("Error: shift inválido (%d). Solo 0 y 1 están permitidos.\n", shift);
@@ -555,9 +555,9 @@ void subs_immediate(int rd, int rn, uint32_t imm12, int shift) {
     printf("operand1: %llu\n", operand1);
 
     // Solo se permiten shifts 0 y 1 según el manual de ARM
-    if (shift == 0) {
+    if (shift == 0b00) {
         imm = imm12;  // LSL #0 (sin desplazamiento)
-    } else if (shift == 1) {
+    } else if (shift == 0b01) {
         imm = imm12 << 12;  // LSL #12 (desplazamiento de 12 bits)
     } else {
         printf("Error: shift inválido (%d). Solo 0 y 1 están permitidos.\n", shift);
@@ -739,30 +739,11 @@ void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     printf("shift: %d\n", shift);
 }
 
-// void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
-//     uint64_t operand1 = CURRENT_STATE.REGS[rn];
-//     uint64_t operand2 = CURRENT_STATE.REGS[rm];
-//     uint64_t result = operand1 | operand2;
-    
-//     update_flags(result);
-//     NEXT_STATE.REGS[rd] = result;
-
-//     // Depuracion 
-//     printf("operand1: %llu\n", operand1);
-//     printf("operand2: %llu\n", operand2);
-//     printf("result: %llu\n", result);
-//     printf("rd: %d\n", rd);
-//     printf("rn: %d\n", rn);
-//     printf("imm6: %d\n", imm6);
-//     printf("rm: %d\n", rm);
-//     printf("n: %d\n", n);
-//     printf("shift: %d\n", shift);
-// }
-
 void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result;
+
     if( rn == 31 ){    
         result = operand2;
     } else {
