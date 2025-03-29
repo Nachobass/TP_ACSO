@@ -1118,8 +1118,6 @@ void add_extended(int rd, int rn, int imm3, int option, int rm){
     uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
-
-
     uint64_t result = operand1 + operand2;
     NEXT_STATE.REGS[rd] = result;
 
