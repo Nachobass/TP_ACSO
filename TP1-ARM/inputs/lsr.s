@@ -1,6 +1,7 @@
-movz X2, 0x00000040        // Cargar el valor 0x40 en X2
-lsr X3, X2, 2              // Desplazar X2 hacia la derecha 2 bits
-HLT 0                      // Terminar ejecución
+.text
+movz X2, 0x00000040        
+lsr X3, X2, 2              
+HLT 0                      
 
 
 // Caso 1: Desplazamiento pequeño (por ejemplo, 2 bits)

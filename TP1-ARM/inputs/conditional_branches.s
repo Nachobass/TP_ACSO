@@ -66,13 +66,13 @@ case_less_equal:
     movz    X28, 7
     movz    X29, 10
     cmp     X28, X29
-    blt     nested_case_1   // X28 < X29 → salta
+    blt     nested_case_1   
 
     adds    X30, X0, #33   // No se ejecuta
 
 nested_case_1:
     cmp     X29, X28
-    bgt     nested_case_2   // X29 > X28 → salta
+    bgt     nested_case_2   
 
     adds    X1, X0, #22   // No se ejecuta
 

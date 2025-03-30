@@ -1,10 +1,11 @@
-// Caso 1: Desplazamiento pequeño (por ejemplo, 2 bits)
+.text
+// Caso 1: Desplazamiento pequeño 
 
 movz X0, 0x10         // X0 = 0x10
 lsl X1, X0, 2        // X1 = X0 << 2, X1 = 0x40
 HLT 0
 
-//Caso 2: Desplazamiento grande (por ejemplo, 60 bits)
+//Caso 2: Desplazamiento grande 
 
 movz X0, 0x10         // X0 = 0x10
 lsl X1, X0, 60       // X1 = X0 << 60, X1 = 0x0
