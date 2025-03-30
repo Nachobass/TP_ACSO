@@ -86,4 +86,4 @@ nested_case_2:
 jump_case:
     adds    X2, X0, #20   // Se ejecuta
 
-    hlt     0
+    HLT     0

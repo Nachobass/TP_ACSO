@@ -1,9 +1,9 @@
 .text
-mov X1, 0x1000
+movz X1, 0x1000
 lsl X1, X1, 16       // X1 = 0x100000000
 
-mov X10, 0x1234      // Primer valor de prueba (16 bits)
-mov X11, 0xABCD      // Segundo valor de prueba (16 bits)
+movz X10, 0x1234      // Primer valor de prueba (16 bits)
+movz X11, 0xABCD      // Segundo valor de prueba (16 bits)
 
 sturh W10, [X1, 0x0] // Almacena 0x1234 en la dirección X1
 sturh W11, [X1, 0x2] // Almacena 0xABCD en la dirección X1 + 2

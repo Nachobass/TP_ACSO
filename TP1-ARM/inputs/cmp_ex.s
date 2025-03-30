@@ -8,4 +8,4 @@ cmp X1, X0          // flag_n = 0
 adds X4, X12, #1    // x4 = 0x1
 cmp X0, X4          // flag_n = 0 y flag_z = 1
 
-hlt #0
+HLT #0

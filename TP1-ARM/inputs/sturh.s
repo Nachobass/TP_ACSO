@@ -1,7 +1,7 @@
 .text
-mov X1, 0x1000
+movz X1, 0x1000
 lsl X1, X1, 16       // X1 = 0x100000000
-mov X10, 0x1234      // Valor de prueba (16 bits)
+movz X10, 0x1234      // Valor de prueba (16 bits)
 
 sturh W10, [X1, 0x0] // Almacena los 16 bits menos significativos de X10 en memoria
 sturh W10, [X1, 0x2] // Almacena nuevamente para comprobar lectura múltiple

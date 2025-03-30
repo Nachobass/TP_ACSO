@@ -1,5 +1,5 @@
 .text
-mov X1, 1
+movz X1, 1
 cbz X1, foo
 adds X14, X0, 120
 
