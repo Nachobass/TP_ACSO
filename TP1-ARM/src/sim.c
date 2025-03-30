@@ -5,7 +5,7 @@
 #include "shell.h"
 
 
-//---------- AUXILIAR FUNCTIONS ----------
+//---------- FUNCIONES AUXILIARES ----------
 void mem_write_64(uint64_t address, uint64_t value) {
     if (address % 8 != 0) {
         printf("Error: Dirección 0x%llx no alineada a 8 bytes\n", address);
@@ -36,8 +36,6 @@ uint64_t mem_read_64(uint64_t address) {
 void mem_write_16(uint64_t address, uint16_t value) {
     // Calcular la dirección base alineada a 4 bytes
     uint64_t aligned_address = address & ~0x3;
-
-    // Leer los 32 bits actuales desde la dirección alineada
     uint32_t current_value = mem_read_32(aligned_address);
 
     // Calcular el desplazamiento de los 16 bits dentro de los 32 bits
@@ -47,15 +45,12 @@ void mem_write_16(uint64_t address, uint16_t value) {
     current_value &= ~(0xFFFF << (halfword_offset * 16)); // Limpiar los 16 bits objetivo
     current_value |= (value << (halfword_offset * 16));   // Escribir el nuevo valor
 
-    // Escribir los 32 bits actualizados de vuelta en la memoria
     mem_write_32(aligned_address, current_value);
 }
 
 uint16_t mem_read_16(uint64_t address) {
     // Calcular la dirección base alineada a 4 bytes
     uint64_t aligned_address = address & ~0x3;
-
-    // Leer los 32 bits actuales desde la dirección alineada
     uint32_t current_value = mem_read_32(aligned_address);
 
     // Calcular el desplazamiento de los 16 bits dentro de los 32 bits
@@ -70,8 +65,6 @@ uint16_t mem_read_16(uint64_t address) {
 void mem_write_8(uint64_t address, uint8_t value) {
     // Calcular la dirección base alineada a 4 bytes
     uint64_t aligned_address = address & ~0x3;
-
-    // Leer los 32 bits actuales desde la dirección alineada
     uint32_t current_value = mem_read_32(aligned_address);
 
     // Calcular el desplazamiento del byte dentro de los 32 bits
@@ -81,15 +74,12 @@ void mem_write_8(uint64_t address, uint8_t value) {
     current_value &= ~(0xFF << (byte_offset * 8)); // Limpiar el byte objetivo
     current_value |= (value << (byte_offset * 8)); // Escribir el nuevo valor
 
-    // Escribir los 32 bits actualizados de vuelta en la memoria
     mem_write_32(aligned_address, current_value);
 }
 
 uint8_t mem_read_8(uint64_t address) {
     // Calcular la dirección base alineada a 4 bytes
     uint64_t aligned_address = address & ~0x3;
-
-    // Leer los 32 bits actuales desde la dirección alineada
     uint32_t current_value = mem_read_32(aligned_address);
 
     // Calcular el desplazamiento del byte dentro de los 32 bits
@@ -110,12 +100,12 @@ void update_state() {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 typedef struct {
-    uint32_t opcode;            // Opcode de la instrucción
-    void (*handler)(uint32_t);  // Función que maneja la instrucción
+    uint32_t opcode;
+    void (*handler)(uint32_t);
 } InstructionEntry;
 
 
-//---------- INSTRUCTIONS ----------
+//---------- INSTRUCCIONES ----------
 
 void handle_adds_immediate(uint32_t instruction);
 void handle_adds_extended(uint32_t instruction);
@@ -188,12 +178,12 @@ void execute_br(uint8_t rn);
 void execute_b_cond(uint32_t imm19, uint8_t condition);
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n);
-void stur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void sturb(int rt, int rn, int imm9);                     //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void sturh(int rt, int rn, int imm9);                     //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void ldur(int rt, int rn, int imm9, int size);            //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void ldurh(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
-void ldurb(int rt, int rn, int imm9, int size);           //(hay dos ceros entre Rn y imm9, son para el escalado del offset)
+void stur(int rt, int rn, int imm9, int size);
+void sturb(int rt, int rn, int imm9);
+void sturh(int rt, int rn, int imm9);
+void ldur(int rt, int rn, int imm9, int size);
+void ldurh(int rt, int rn, int imm9, int size);
+void ldurb(int rt, int rn, int imm9, int size);
 void movz(int rd, int imm16, int hw);
 void add_immediate(int rd, int rn, uint32_t imm12, int shift);
 void add_extended(int rd, int rn, int imm3, int option, int rm);
@@ -223,12 +213,9 @@ void process_instruction() {
             instruction_table[i].opcode == opCode6  ||   // Para instrucciones de 6 bits
             instruction_table[i].opcode == opCode22) {   // Para instrucciones de 22 bits
 
-            instruction_table[i].handler(instruction);  // Ejecutar función asociada
-            // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-            // return;
+            instruction_table[i].handler(instruction);
             // Solo avanzar el PC si la instrucción no lo modificó (evita sobrescribir saltos)
             if (NEXT_STATE.PC == CURRENT_STATE.PC) {
-                // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
                 update_state();
             }
             
