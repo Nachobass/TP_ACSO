@@ -1,4 +1,6 @@
 # TO RUN:
+# chmod +x compare_rdump.sh
+# chmod +x compare_multiple_cycles.sh
 # chmod +x compare_everything.py
 # python3 compare_everything.py
 
@@ -14,7 +16,7 @@ expected_message_1 = "✅ No differences found in dumpsim files."
 expected_message_2 = "✅ All simulations returned the same memory dump for the given cycles."
 
 all_match = True
-failing_files = []  # Lista para almacenar los archivos que fallan
+failing_files = []
 
 for file_name in file_names:
     command = f"./compare_multiple_cycles.sh ./inputs/bytecodes/{file_name}"
@@ -25,7 +27,7 @@ for file_name in file_names:
     
     if expected_message_1 not in output or expected_message_2 not in output:
         all_match = False
-        failing_files.append(file_name)  # Agregar el archivo que falla a la lista
+        failing_files.append(file_name)
 
 if all_match:
     print("****************************************")
