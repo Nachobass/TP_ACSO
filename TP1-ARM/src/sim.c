@@ -99,6 +99,7 @@ static void update_flags(int64_t result) {
 void update_state() {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
+
 typedef struct {
     uint32_t opcode;
     void (*handler)(uint32_t);
@@ -224,10 +225,8 @@ void process_instruction() {
     }
 
     printf("Error: opcode no reconocido\n");
-    // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     // Solo avanzar el PC si la instrucción no lo modificó
     if (NEXT_STATE.PC == CURRENT_STATE.PC) {
-        // NEXT_STATE.PC = CURRENT_STATE.PC + 4;
         update_state();
     }
 }
@@ -300,7 +299,7 @@ void handle_ands_shifted_register(uint32_t instruction) {
     uint32_t rd = instruction & 0x1F;
 
     ands_shifted_register(rd, rn, imm6, rm, 0, shift);
-    printf("AND SHIFTED REGISTER ejecutado\n");
+    printf("ANDS SHIFTED REGISTER ejecutado\n");
 }
 
 void handle_eor_shifted_register(uint32_t instruction) {
@@ -322,7 +321,7 @@ void handle_orr_shifted_register(uint32_t instruction) {
     uint32_t rd = instruction & 0x1F;
 
     orr_shifted_register(rd, rn, imm6, rm, 0, shift);
-    printf("OR SHIFTED REGISTER ejecutado\n");
+    printf("ORR SHIFTED REGISTER ejecutado\n");
 }
 
 void handle_execute_b(uint32_t instruction) {
@@ -465,16 +464,7 @@ void handle_cbnz(uint32_t instruction) {
 void adds_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
-
     operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
-    
-    // if (rn == 31) {
-    //     operand1 = CURRENT_STATE.REGS[31]; // uso el registro especial XZR/WZR.
-    // } else {
-    //     operand1 = CURRENT_STATE.REGS[rn];
-    // }
-
-    printf("operand1: %llu\n", operand1);
 
     // Solo se permiten shifts 0 y 1 según el manual de ARM
     if (shift == 0b00) {
@@ -490,31 +480,27 @@ void adds_immediate(int rd, int rn, uint32_t imm12, int shift) {
     update_flags(result);
     NEXT_STATE.REGS[rd] = result;
 
-
     // Depuracion 
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("d: %d\n", rd);
-    printf("n: %d\n", rn);
-    printf("imm12: %d\n", imm12);
-    printf("shift: %d\n", shift);
+    printf("d: %d, n: %d, imm12: %d, shift: %d\n", rd, rn, imm12, shift);
 }
 
 void adds_extended(int rd, int rn, int imm3, int option, int rm) {
-    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Uso el registro especial XZR/WZR si n es 31.
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     // Aplicar extensión según el campo 'option'
     switch (option) {
-        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
-        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
-        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
-        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
-        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
-        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
-        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
-        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        case 0b000: operand2 = (uint8_t)operand2; break;   // UXTB (Unsigned Extend Byte)
+        case 0b001: operand2 = (uint16_t)operand2; break;  // UXTH (Unsigned Extend Halfword)
+        case 0b010: operand2 = (uint32_t)operand2; break;  // UXTW (Unsigned Extend Word)
+        case 0b011: operand2 = operand2; break;            // UXTX (Unsigned Extend Doubleword, sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;    // SXTB (Sign Extend Byte)
+        case 0b101: operand2 = (int16_t)operand2; break;   // SXTH (Sign Extend Halfword)
+        case 0b110: operand2 = (int32_t)operand2; break;   // SXTW (Sign Extend Word)
+        case 0b111: operand2 = operand2; break;            // SXTX (Sign Extend Doubleword, sin cambios)
         default:
             printf("Error: opción de extensión inválida (%d)\n", option);
             return;
@@ -525,14 +511,10 @@ void adds_extended(int rd, int rn, int imm3, int option, int rm) {
         printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
         return;
     }
+
     operand2 <<= imm3;
-
-    // Suma con actualización de flags
     uint64_t result = operand1 + operand2;
-    
     update_flags(result);
-
-    // Guardar el resultado en el registro destino
     NEXT_STATE.REGS[rd] = result;
 
     // Depuración
@@ -551,7 +533,6 @@ void subs_immediate(int rd, int rn, uint32_t imm12, int shift) {
 
     printf("operand1: %llu\n", operand1);
 
-    // Solo se permiten shifts 0 y 1 según el manual de ARM
     if (shift == 0b00) {
         imm = imm12;  // LSL #0 (sin desplazamiento)
     } else if (shift == 0b01) {
@@ -570,26 +551,24 @@ void subs_immediate(int rd, int rn, uint32_t imm12, int shift) {
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("d: %d\n", rd);
-    printf("n: %d\n", rn);
-    printf("imm12: %d\n", imm12);
-    printf("shift: %d\n", shift);
+    printf("d: %d, n: %d, imm12: %d, shift: %d\n", rd, rn, imm12, shift);
+
 }
 
 void subs_extended(int rd, int rn, int imm3, int option, int rm) {
-    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Uso el registro especial XZR/WZR si n es 31.
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     // Aplicar extensión según el campo 'option'
     switch (option) {
-        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
-        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
-        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
-        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
-        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
-        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
-        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
-        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        case 0b000: operand2 = (uint8_t)operand2; break;   // UXTB (Unsigned Extend Byte)
+        case 0b001: operand2 = (uint16_t)operand2; break;  // UXTH (Unsigned Extend Halfword)
+        case 0b010: operand2 = (uint32_t)operand2; break;  // UXTW (Unsigned Extend Word)
+        case 0b011: operand2 = operand2; break;            // UXTX (Unsigned Extend Doubleword, sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;    // SXTB (Sign Extend Byte)
+        case 0b101: operand2 = (int16_t)operand2; break;   // SXTH (Sign Extend Halfword)
+        case 0b110: operand2 = (int32_t)operand2; break;   // SXTW (Sign Extend Word)
+        case 0b111: operand2 = operand2; break;            // SXTX (Sign Extend Doubleword, sin cambios)
         default:
             printf("Error: opción de extensión inválida (%d)\n", option);
             return;
@@ -600,14 +579,10 @@ void subs_extended(int rd, int rn, int imm3, int option, int rm) {
         printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
         return;
     }
+
     operand2 <<= imm3;
-
-    // Resta con actualización de flags
     uint64_t result = operand1 - operand2;
-    
     update_flags(result);
-
-    // Guardar el resultado en el registro destino
     NEXT_STATE.REGS[rd] = result;
 
     // Depuración
@@ -628,9 +603,6 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t imm;
 
     operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
-    // uint64_t operand1 = (rn == 31) ? 0 : CURRENT_STATE.REGS[rn];
-
-    printf("operand1: %llu\n", operand1);
 
     // Solo se permiten shifts 0 y 1 según el manual de ARM
     if (shift == 0) {
@@ -644,7 +616,6 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift) {
 
     uint64_t result = operand1 - imm;
     update_flags(result);
-
     printf("Register x31: %llu\n", CURRENT_STATE.REGS[31]);
 
 
@@ -652,26 +623,23 @@ void cmp_immediate(int rd, int rn, uint32_t imm12, int shift) {
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("d: %d\n", rd);
-    printf("n: %d\n", rn);
-    printf("imm12: %d\n", imm12);
-    printf("shift: %d\n", shift);
+    printf("d: %d, n: %d, imm12: %d, shift: %d\n", rd, rn, imm12, shift);
 }
 
 void cmp_extended(int rd, int rn, int imm3, int option, int rm) {
-    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Uso el registro especial XZR/WZR si n es 31.
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     // Aplicar extensión según el campo 'option'
     switch (option) {
-        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
-        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
-        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
-        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
-        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
-        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
-        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
-        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        case 0b000: operand2 = (uint8_t)operand2; break;   // UXTB (Unsigned Extend Byte)
+        case 0b001: operand2 = (uint16_t)operand2; break;  // UXTH (Unsigned Extend Halfword)
+        case 0b010: operand2 = (uint32_t)operand2; break;  // UXTW (Unsigned Extend Word)
+        case 0b011: operand2 = operand2; break;            // UXTX (Unsigned Extend Doubleword, sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;    // SXTB (Sign Extend Byte)
+        case 0b101: operand2 = (int16_t)operand2; break;   // SXTH (Sign Extend Halfword)
+        case 0b110: operand2 = (int32_t)operand2; break;   // SXTW (Sign Extend Word)
+        case 0b111: operand2 = operand2; break;            // SXTX (Sign Extend Doubleword, sin cambios)
         default:
             printf("Error: opción de extensión inválida (%d)\n", option);
             return;
@@ -682,13 +650,10 @@ void cmp_extended(int rd, int rn, int imm3, int option, int rm) {
         printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
         return;
     }
+
     operand2 <<= imm3;
-
-    // Resta con actualización de flags
     uint64_t result = operand1 - operand2;
-    
     update_flags(result);
-
     printf("Register x31: %llu\n", CURRENT_STATE.REGS[31]);
 
     // Depuración
@@ -712,12 +677,7 @@ void ands_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     printf("operand1: %llu\n", operand1);
     printf("operand2: %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imm6: %d\n", imm6);
-    printf("rm: %d\n", rm);
-    printf("n: %d\n", n);
-    printf("shift: %d\n", shift);
+    printf("rd: %d, rn: %d, rm: %d, imm6: %d, n: %d, shift: %d\n", rd, rn, rm, imm6, n, shift);
 }
 
 
@@ -726,19 +686,13 @@ void eor_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     uint64_t operand2 = CURRENT_STATE.REGS[rm];
     uint64_t result = operand1 ^ operand2;
     
-    // update_flags(result);
     NEXT_STATE.REGS[rd] = result;
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
     printf("operand2: %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imm6: %d\n", imm6);
-    printf("rm: %d\n", rm);
-    printf("n: %d\n", n);
-    printf("shift: %d\n", shift);
+    printf("rd: %d, rn: %d, rm: %d, imm6: %d, n: %d, shift: %d\n", rd, rn, rm, imm6, n, shift);
 }
 
 void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
@@ -758,12 +712,7 @@ void orr_shifted_register(int rd, int rn, int imm6, int rm, int n, int shift) {
     printf("operand1: %llu\n", operand1);
     printf("operand2: %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imm6: %d\n", imm6);
-    printf("rm: %d\n", rm);
-    printf("n: %d\n", n);
-    printf("shift: %d\n", shift);
+    printf("rd: %d, rn: %d, rm: %d, imm6: %d, n: %d, shift: %d\n", rd, rn, rm, imm6, n, shift);
 }
 
 
@@ -785,7 +734,6 @@ void execute_b(uint32_t imm26) {
 
 void execute_br(uint8_t rn) {
     uint64_t target = CURRENT_STATE.REGS[rn];
-    
     NEXT_STATE.PC = target;
     
     // Depuración
@@ -797,8 +745,6 @@ void execute_br(uint8_t rn) {
 void execute_b_cond(uint32_t imm19, uint8_t condition) { 
     int64_t offset = (((int64_t)imm19 << 45) >> 45) << 2;
     printf("IMM19: %d, OFFSET calculado: %lld (0x%llx)\n", imm19, offset, offset);
-    // printf("IMM19: %d\n", imm19);
-    // printf("OFFSET: %lld\n", offset);
     
     bool cond = false;
     switch (condition) {
@@ -815,13 +761,9 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     printf("FLAG_Z: %d, FLAG_N: %d, Condición evaluada: %d\n", CURRENT_STATE.FLAG_Z, CURRENT_STATE.FLAG_N, cond);
     if (cond) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
-        // printf("CURRENT: PC: 0x%llx\n", CURRENT_STATE.PC);  // Depuración
-        // printf("SALTO: Nueva PC: 0x%llx\n", NEXT_STATE.PC);  // Depuración
         printf("Saltando: PC actual = 0x%llx, Nuevo PC = 0x%llx\n", CURRENT_STATE.PC, CURRENT_STATE.PC + offset);
-
     } else {
         printf("No salta: Condición no cumplida, avanzando PC normal.\n");
-        // NEXT_STATE.PC = CURRENT_STATE.PC + 4; 
         update_state();
     }
     
@@ -830,20 +772,19 @@ void execute_b_cond(uint32_t imm19, uint8_t condition) {
     printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
     printf("Offset: %lld (0x%llx)\n", offset, offset);
     printf("Condition: 0x%x\n", condition);
-
 }
 
 
 void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t shift = 64 - immr;
+
     if (shift > 63) {
         printf("Error: shift demasiado grande\n");
         return;
     }
-    uint64_t result = operand1 << shift;
 
-    
+    uint64_t result = operand1 << shift;
     update_flags(result);
     NEXT_STATE.REGS[rd] = result;
 
@@ -851,29 +792,20 @@ void lsl_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     printf("operand1: %llu\n", operand1);
     printf("shift: %llu\n", shift);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imms: %d\n", imms);
-    printf("immr: %d\n", immr);
-    printf("n: %d\n", n);
+    printf("rd: %d, rn: %d, imms: %d, immr: %d, n: %d\n", rd, rn, imms, immr, n);
 }
 
 void lsr_immediate(int rd, int rn, uint32_t imms, uint32_t immr, int n) {
     uint64_t operand1 = CURRENT_STATE.REGS[rn];
     uint64_t shift = immr;
     uint64_t result = operand1 >> shift;
-    
     update_flags(result);
     NEXT_STATE.REGS[rd] = result;
 
     // Depuracion 
     printf("operand1: %llu\n", operand1);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imms: %d\n", imms);
-    printf("immr: %d\n", immr);
-    printf("n: %d\n", n);
+    printf("rd: %d, rn: %d, imms: %d, immr: %d, n: %d\n", rd, rn, imms, immr, n);
 }
 
 
@@ -895,10 +827,7 @@ void stur(int rt, int rn, int imm9, int size) {
 
     // Depuración
     printf("STUR Execution:\n");
-    printf("rt: %d\n", rt);
-    printf("rn: %d\n", rn);
-    printf("imm9: %d\n", imm9);
-    printf("size: %d\n", size);
+    printf("rt: %d, rn: %d, imm9: %d, size: %d\n", rt, rn, imm9, size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -907,13 +836,11 @@ void stur(int rt, int rn, int imm9, int size) {
 void sturb(int rt, int rn, int imm9) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
-
     uint8_t data = (uint8_t)(CURRENT_STATE.REGS[rt]);  // Solo los 8 bits menos significativos
 
-    // Escribir en memoria
     mem_write_8(address, data);
 
-    // Verificar si el valor se guardó correctamente
+    // Verificación de si el valor se guardó correctamente
     uint8_t read_back = mem_read_8(address);
     printf("STURB (Store Byte) Execution:\n");
     printf("Mem[0x%llx] = 0x%02x (debería ser 0x%02x)\n", address, read_back, data);
@@ -926,15 +853,14 @@ void sturb(int rt, int rn, int imm9) {
     printf("Memory address (ajustada): 0x%llx\n", address);
 }
 
-// solo implementamos con hw=0, es decir shift=0
 void sturh(int rt, int rn, int imm9) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
-
     uint16_t data = (uint16_t)(CURRENT_STATE.REGS[rt] & 0xFFFF);
     mem_write_16(address, data);
 
     printf("STURH (Store Halfword): Mem[0x%llx] = 0x%04x\n", address, data);
+
     // Depuración
     printf("STURH (Store Halfword) Execution:\n");
     printf("Register X%d contains data: 0x%hx\n", rt, data);
@@ -943,6 +869,7 @@ void sturh(int rt, int rn, int imm9) {
     printf("Memory address: 0x%llx\n", address);
     printf("Data stored: 0x%hx\n", data);
 }
+
 
 void ldur(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);  
@@ -961,10 +888,7 @@ void ldur(int rt, int rn, int imm9, int size) {
 
     // Depuración
     printf("LDUR Execution:\n");
-    printf("rt: %d\n", rt);
-    printf("rn: %d\n", rn);
-    printf("imm9: %d\n", imm9);
-    printf("size: %d\n", size);
+    printf("rt: %d, rn: %d, imm9: %d, size: %d\n", rt, rn, imm9, size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -974,18 +898,15 @@ void ldur(int rt, int rn, int imm9, int size) {
 void ldurh(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
-
     uint16_t data = mem_read_16(address);
     NEXT_STATE.REGS[rt] = (uint64_t)data;
 
     printf("LDURH: Mem[0x%llx] -> W%d = 0x%04x\n", address, rt, data);
+
     // Depuración
     printf("LDURH: Mem[0x%llx] -> W%d = 0x%04x\n", address, rt, data);
     printf("LDURH Execution:\n");
-    printf("rt: %d\n", rt);
-    printf("rn: %d\n", rn);
-    printf("imm9: %d\n", imm9);
-    printf("size: %d\n", size);
+    printf("rt: %d, rn: %d, imm9: %d, size: %d\n", rt, rn, imm9, size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -995,19 +916,15 @@ void ldurh(int rt, int rn, int imm9, int size) {
 void ldurb(int rt, int rn, int imm9, int size) {
     int64_t offset = (((int64_t)imm9 << 55) >> 55);
     uint64_t address = CURRENT_STATE.REGS[rn] + offset;
-
-
     uint8_t data = mem_read_8(address);
     NEXT_STATE.REGS[rt] = (uint64_t)data;
 
     printf("LDURB: Mem[0x%llx] -> W%d = 0x%02x\n", address, rt, data);
+
     // Depuración
     printf("LDURB: Mem[0x%llx] -> W%d = 0x%02x\n", address, rt, data);
     printf("LDURB Execution:\n");
-    printf("rt: %d\n", rt);
-    printf("rn: %d\n", rn);
-    printf("imm9: %d\n", imm9);
-    printf("size: %d\n", size);
+    printf("rt: %d, rn: %d, imm9: %d, size: %d\n", rt, rn, imm9, size);
     printf("Register X%d contains address: 0x%llx\n", rn, CURRENT_STATE.REGS[rn]);
     printf("Offset (sign-extended): %lld\n", offset);
     printf("Memory address: 0x%llx\n", address);
@@ -1031,10 +948,7 @@ void ldurb(int rt, int rn, int imm9, int size) {
 void add_immediate(int rd, int rn, uint32_t imm12, int shift) {
     uint64_t operand1;
     uint64_t imm;
-
     operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn]; // Uso el registro especial XZR/WZR si n es 31.
-
-    printf("operand1: %llu\n", operand1);
 
     // Solo se permiten shifts 0 y 1 según el manual de ARM
     if (shift == 0b00) {
@@ -1054,63 +968,22 @@ void add_immediate(int rd, int rn, uint32_t imm12, int shift) {
     printf("operand1: %llu\n", operand1);
     printf("imm: %llu\n", imm);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("imm12: %d\n", imm12);
-    printf("shift: %d\n", shift);
-
+    printf("rd: %d, rn: %d, imm12: %d, shift: %d\n", rd, rn, imm12, shift);
 }
 
-/* void add_extended(int rd, int rn, int imm3, int option, int rm){
-    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
-    uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
-
-    switch (option) {
-        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
-        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
-        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
-        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
-        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
-        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
-        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
-        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
-        default:
-            printf("Error: opción de extensión inválida (%d)\n", option);
-            return;
-    }
-
-    // Aplicar el desplazamiento (imm3 debe estar entre 0 y 4)
-    if (imm3 > 4) {
-        printf("Error: imm3 inválido (%d), debe estar entre 0 y 4\n", imm3);
-        return;
-    }
-    operand2 <<= imm3;
-
-    uint64_t result = operand1 + operand2;
-    NEXT_STATE.REGS[rd] = result;
-
-    // Depuración
-    printf("operand1: %llu\n", operand1);
-    printf("operand2 (extendido y desplazado): %llu\n", operand2);
-    printf("result: %llu\n", result);
-    printf("d: %d, n: %d, rm: %d, imm3: %d, option: %d\n", rd, rn, rm, imm3, option);
-
-} */
-
-
 void add_extended(int rd, int rn, int imm3, int option, int rm){
-    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Si n == 31, usa el stack pointer (SP)
+    uint64_t operand1 = (rn == 31) ? CURRENT_STATE.REGS[31] : CURRENT_STATE.REGS[rn];  // Uso el registro especial XZR/WZR si n es 31.
     uint64_t operand2 = CURRENT_STATE.REGS[rm];  // Segundo operando sin extender
 
     switch (option) {
-        case 0b000: operand2 = (uint8_t)operand2; break;  // UXTB (Unsigned Extend Byte)
-        case 0b001: operand2 = (uint16_t)operand2; break; // UXTH (Unsigned Extend Halfword)
-        case 0b010: operand2 = (uint32_t)operand2; break; // UXTW (Unsigned Extend Word)
-        case 0b011: operand2 = operand2; break;          // UXTX (Unsigned Extend Doubleword, sin cambios)
-        case 0b100: operand2 = (int8_t)operand2; break;  // SXTB (Sign Extend Byte)
-        case 0b101: operand2 = (int16_t)operand2; break; // SXTH (Sign Extend Halfword)
-        case 0b110: operand2 = (int32_t)operand2; break; // SXTW (Sign Extend Word)
-        case 0b111: operand2 = operand2; break;          // SXTX (Sign Extend Doubleword, sin cambios)
+        case 0b000: operand2 = (uint8_t)operand2; break;   // UXTB (Unsigned Extend Byte)
+        case 0b001: operand2 = (uint16_t)operand2; break;  // UXTH (Unsigned Extend Halfword)
+        case 0b010: operand2 = (uint32_t)operand2; break;  // UXTW (Unsigned Extend Word)
+        case 0b011: operand2 = operand2; break;            // UXTX (Unsigned Extend Doubleword, sin cambios)
+        case 0b100: operand2 = (int8_t)operand2; break;    // SXTB (Sign Extend Byte)
+        case 0b101: operand2 = (int16_t)operand2; break;   // SXTH (Sign Extend Halfword)
+        case 0b110: operand2 = (int32_t)operand2; break;   // SXTW (Sign Extend Word)
+        case 0b111: operand2 = operand2; break;            // SXTX (Sign Extend Doubleword, sin cambios)
         default:
             printf("Error: opción de extensión inválida (%d)\n", option);
             return;
@@ -1140,22 +1013,20 @@ void mul(int rd, int rn, int rm) {
     printf("operand1: %llu\n", operand1);
     printf("operand2: %llu\n", operand2);
     printf("result: %llu\n", result);
-    printf("rd: %d\n", rd);
-    printf("rn: %d\n", rn);
-    printf("rm: %d\n", rm);
+    printf("rd: %d, rn: %d, rm: %d\n", rd, rn, rm);
 }
 
 
 void cbz(int rt, int imm19) {
     uint64_t operand = CURRENT_STATE.REGS[rt];
+
     // Sign-extend imm19 a 64 bits y multiplicar por 4
     int64_t offset = (((int64_t)imm19 << 45) >> 45) << 2;
-    // Si el registro es cero, actualizar el PC
+
     if (operand == 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
         printf("CBZ: X%d == 0, salto a 0x%llx\n", rt, NEXT_STATE.PC);
     } else {
-        // NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
         update_state();
         printf("CBZ: X%d != 0, no salta\n", rt);
     }
@@ -1167,21 +1038,19 @@ void cbz(int rt, int imm19) {
     printf("Current PC: 0x%llx\n", CURRENT_STATE.PC);
     printf("New PC: 0x%llx\n", NEXT_STATE.PC);
     printf("Offset: %lld (0x%llx)\n", offset, offset);
-    // printf("New PC: 0x%llx\n", NEXT_STATE.PC);
 }
 
 
 void cbnz(int rt, int imm19) {
     uint64_t operand = CURRENT_STATE.REGS[rt];
+
     // Sign-extend imm19 a 64 bits y multiplicar por 4
     int64_t offset = ((int64_t)imm19 << 45) >> 45 << 2;
 
-    // Si el registro no es cero, actualizar el PC
     if (operand != 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
         printf("CBNZ: X%d != 0, salto a 0x%llx\n", rt, NEXT_STATE.PC);
     } else {
-        // NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Avanzar a la siguiente instrucción
         update_state();
         printf("CBNZ: X%d == 0, no salta\n", rt);
     }
@@ -1194,4 +1063,3 @@ void cbnz(int rt, int imm19) {
     printf("Offset: %lld (0x%llx)\n", offset, offset);
     printf("New PC: 0x%llx\n", NEXT_STATE.PC);
 }
-
