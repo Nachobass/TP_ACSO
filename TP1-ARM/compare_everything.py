@@ -17,13 +17,17 @@ expected_message_2 = "✅ All simulations returned the same memory dump for the 
 
 all_match = True
 failing_files = []
+count = 0
+file_len = len(file_names)
 
 for file_name in file_names:
+    count += 1
     command = f"./compare_multiple_cycles.sh ./inputs/bytecodes/{file_name}"
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     output = result.stdout.strip()
     
     print(f"Output para {file_name}: {output}")
+    print(f"Progreso: {count}/{file_len}")
     
     if expected_message_1 not in output or expected_message_2 not in output:
         all_match = False
