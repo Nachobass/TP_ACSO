@@ -1,6 +1,3 @@
-// #include "ej1.h"
-
-
 /** Lista **/
 /* 
 // string_proc_list tiene dos punteros (8 bytes cada uno en x86_64), ocupando en total 16 bytes
@@ -27,7 +24,7 @@ typedef struct string_proc_node_t {
 #include <string.h>
 #include "ej1.h"
 
-/** Crea una nueva lista vacía **/
+/* Crea una nueva lista vacía */
 string_proc_list* string_proc_list_create(void){
     string_proc_list* list = malloc(sizeof(string_proc_list));
     if( list == NULL ) return NULL;
@@ -36,18 +33,23 @@ string_proc_list* string_proc_list_create(void){
     return list;
 }
 
-/** Crea un nuevo nodo apuntando al hash pasado **/
+/* Crea un nuevo nodo apuntando al hash pasado */
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
     string_proc_node* node = malloc(sizeof(string_proc_node));
     if( node == NULL ) return NULL;
     node->type = type;
-    node->hash = hash;
+    // node->hash = hash;
+    node->hash = strdup(hash);
+    if (node->hash == NULL) {
+        free(node);
+        return NULL;
+    }
     node->next = NULL;
     node->previous = NULL;
     return node;
 }
 
-/** Agrega un nodo al final de la lista **/
+/* Agrega un nodo al final de la lista */
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
     if( list == NULL ) return;
     string_proc_node* node = string_proc_node_create(type, hash);
@@ -63,7 +65,7 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
     }
 }
 
-/** Concatena los hashes de los nodos que coinciden con el tipo dado **/
+/* Concatena los hashes de los nodos que coinciden con el tipo dado */
 char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash){
     if( list == NULL ) return NULL;
 

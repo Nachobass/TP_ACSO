@@ -49,6 +49,7 @@ string_proc_list_create_asm:
 string_proc_node_create_asm:
     push rbp
     mov rbp, rsp
+    push rbx                ; usamos rbx para guardar direcciones temporales
     xor rax, rax
 
     ; guardar argumentos
@@ -59,18 +60,41 @@ string_proc_node_create_asm:
     call malloc
     test rax, rax
     je .return_null
+    mov rbx, rax            ; guardamos el puntero al nodo en rbx
 
+    ; strdup(hash) - primero strlen
+    mov rdi, rdx            ; hash como argumento
+    call strlen
+    inc rax                 ; +1 para null terminator
+    mov rdi, rax
+    call malloc
+    test rax, rax
+    je .free_node_and_return_null
+    mov rsi, rdx            ; rsi ← hash
+    mov rdi, rax            ; rdi ← destino malloc
+    call strcpy             ; duplica el string
+
+    ; ahora rax ← copia del hash
+    ; construir el nodo
     ; rax = nodo
-    mov qword [rax + 0], NULL      ; next
-    mov qword [rax + 8], NULL      ; previous
+    mov qword [rax + 0], 0      ; next
+    mov qword [rax + 8], 0      ; previous
     mov byte  [rax + 16], cl       ; type, cl es la parte baja de rcx
-    mov qword [rax + 24], rdx      ; hash
+    mov qword [rax + 24], rax      ; hash
 
+    mov rax, rbx                ; devolver el puntero al nodo
+
+    pop rbx
     pop rbp
     ret
 
+.free_node_and_return_null:
+    mov rdi, rbx
+    call free
+
 .return_null:
     xor rax, rax
+    pop rbx
     pop rbp
     ret
 
