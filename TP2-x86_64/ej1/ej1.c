@@ -34,30 +34,47 @@ string_proc_list* string_proc_list_create(void){
 }
 
 /* Crea un nuevo nodo apuntando al hash pasado */
+// string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+//     string_proc_node* node = malloc(sizeof(string_proc_node));
+//     if( node == NULL ) return NULL;
+//     node->type = type;
+//     // node->hash = hash;
+//     node->hash = strdup(hash);
+//     if (node->hash == NULL) {
+//         free(node);
+//         return NULL;
+//     }
+//     node->next = NULL;
+//     node->previous = NULL;
+//     return node;
+// }
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+    if( hash == NULL ) return NULL;
     string_proc_node* node = malloc(sizeof(string_proc_node));
     if( node == NULL ) return NULL;
     node->type = type;
-    // node->hash = hash;
-    node->hash = strdup(hash);
-    if (node->hash == NULL) {
-        free(node);
-        return NULL;
-    }
+    node->hash = hash;
     node->next = NULL;
     node->previous = NULL;
     return node;
 }
 
+
+
 /* Agrega un nodo al final de la lista */
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
-    if( list == NULL ) return;
+    if( list == NULL || hash == NULL ) return;
+
     string_proc_node* node = string_proc_node_create(type, hash);
     if( node == NULL ) return;
 
     if( list->first == NULL ) {         // Lista vacía
         list->first = node;
         list->last = node;
+        return;
+    } elif( list->last == NULL ){                            // Lista no vacía
+        free(node);
+        return;
     } else {                            // Lista no vacía
         list->last->next = node;
         node->previous = list->last;
@@ -65,24 +82,46 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
     }
 }
 
-/* Concatena los hashes de los nodos que coinciden con el tipo dado */
-char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash){
-    if( list == NULL ) return NULL;
 
-    char* result = strdup(hash);  // copiamos el hash inicial
-    if( result == NULL ) return NULL;
+/* Concatena los hashes de los nodos que coinciden con el tipo dado */
+char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+    if (list == NULL || hash == NULL) return NULL;
+
+    // Copiamos el hash inicial (no lo modificamos)
+    char* result = strdup(hash);
+    if (result == NULL) return NULL;
 
     string_proc_node* current = list->first;
+
+    // Prevención de ciclos: lista de nodos visitados (hasta 100)
+    string_proc_node* visited[100] = {NULL};
+    size_t visit_count = 0;
+
     while( current != NULL ) {
-        if( current->type == type && current->hash != NULL ) {
+        // Chequeo de ciclos
+        for( size_t i = 0; i < visit_count; i++ ){
+            if( current == visited[i] ){
+                free(result);
+                return NULL;
+            }
+        }
+        if( visit_count < 100 ) visited[visit_count++] = current;
+
+        // Concatenamos si el tipo coincide
+        if (current->type == type && current->hash != NULL) {
             char* new_result = str_concat(result, current->hash);
-            free(result);  // liberamos la anterior
+            if (new_result == NULL) {
+                free(result);
+                return NULL;
+            }
+            free(result);
             result = new_result;
         }
+
         current = current->next;
     }
 
-    return result;  // el llamador debe liberar esto
+    return result;  // El llamador debe liberar
 }
 
 
