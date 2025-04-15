@@ -24,6 +24,9 @@ typedef struct string_proc_node_t {
 #include <string.h>
 #include "ej1.h"
 
+
+#define MAX_RESULT_LEN 1048576  // 1 MB máx
+
 /* Crea una nueva lista vacía */
 string_proc_list* string_proc_list_create(void){
     string_proc_list* list = malloc(sizeof(string_proc_list));
@@ -67,60 +70,81 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
 }
 
 /* Concatena los hashes de los nodos que coinciden con el tipo dado */
-// char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash){
-//     if( list == NULL ) return NULL;
+// char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+//     if( list == NULL || hash == NULL ) return NULL;
 
-//     char* result = strdup(hash);  // copiamos el hash inicial
-//     if( result == NULL ) return NULL;
+//     // Detección de ciclos 
+//     string_proc_node* slow = list->first;
+//     string_proc_node* fast = list->first;
+//     while( fast && fast->next ){
+//         slow = slow->next;
+//         fast = fast->next->next;
+//         if( slow == fast ){
+//             return NULL;
+//         }
+//     }
 
+//     size_t total_len = strlen(hash);
 //     string_proc_node* current = list->first;
-//     while( current != NULL ) {
-//         if( current->type == type && current->hash != NULL ) {
-//             char* new_result = str_concat(result, current->hash);
-//             free(result);  // liberamos la anterior
-//             result = new_result;
+//     while( current != NULL ){
+//         if( current->type == type && current->hash != NULL ){
+//             total_len += strlen(current->hash);
+//             if( total_len > MAX_RESULT_LEN ) return NULL;  // Prevención de overflow
 //         }
 //         current = current->next;
 //     }
 
-//     return result;  // el llamador debe liberar esto
-// }
-#define MAX_RESULT_LEN 1048576  // 1 MB máx
+//     char* result = malloc(total_len + 1);
+//     if( result == NULL ) return NULL;
 
+//     strcpy(result, hash);
+
+//     // Concatenar el resto
+//     current = list->first;
+//     while( current != NULL ){
+//         if( current->type == type && current->hash != NULL ){
+//             strcat(result, current->hash);
+//         }
+//         current = current->next;
+//     }
+
+//     return result;
+// }
 char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
     if( list == NULL || hash == NULL ) return NULL;
 
-    // Detección de ciclos 
+    // detección de ciclo (tortuga y liebre)
     string_proc_node* slow = list->first;
     string_proc_node* fast = list->first;
     while( fast && fast->next ){
         slow = slow->next;
         fast = fast->next->next;
-        if( slow == fast ){
-            return NULL;
-        }
+        if( slow == fast ) return NULL;  // ciclo detectado
     }
 
-    size_t total_len = strlen(hash);
+    char* result = strdup(hash);
+    if( result == NULL ) return NULL;
+
+    size_t current_len = strlen(result);
+
     string_proc_node* current = list->first;
     while( current != NULL ){
         if( current->type == type && current->hash != NULL ){
-            total_len += strlen(current->hash);
-            if( total_len > MAX_RESULT_LEN ) return NULL;  // Prevención de overflow
-        }
-        current = current->next;
-    }
+            size_t add_len = strlen(current->hash);
+            if( current_len + add_len > MAX_RESULT_LEN ){
+                free(result);
+                return NULL;  // overflow
+            }
 
-    char* result = malloc(total_len + 1);
-    if( result == NULL ) return NULL;
+            char* new_result = str_concat(result, current->hash);
+            if( new_result == NULL ){
+                free(result);
+                return NULL;
+            }
 
-    strcpy(result, hash);
-
-    // Concatenar el resto
-    current = list->first;
-    while( current != NULL ){
-        if( current->type == type && current->hash != NULL ){
-            strcat(result, current->hash);
+            free(result);
+            result = new_result;
+            current_len += add_len;
         }
         current = current->next;
     }
