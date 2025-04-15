@@ -59,7 +59,7 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
         list->first = node;
         list->last = node;
         return;
-    } elif( list->last == NULL ){                            // Lista no vacía
+    } else if( list->last == NULL ){                            // Lista no vacía
         free(node);
         return;
     } else {                            // Lista no vacía
