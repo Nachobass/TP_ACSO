@@ -35,15 +35,11 @@ string_proc_list* string_proc_list_create(void){
 
 /* Crea un nuevo nodo apuntando al hash pasado */
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+    if( hash == NULL ) return NULL;
     string_proc_node* node = malloc(sizeof(string_proc_node));
     if( node == NULL ) return NULL;
     node->type = type;
-    // node->hash = hash;
-    node->hash = strdup(hash);
-    if (node->hash == NULL) {
-        free(node);
-        return NULL;
-    }
+    node->hash = hash;
     node->next = NULL;
     node->previous = NULL;
     return node;
