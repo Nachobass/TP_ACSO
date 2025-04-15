@@ -47,13 +47,18 @@ string_proc_node* string_proc_node_create(uint8_t type, char* hash){
 
 /* Agrega un nodo al final de la lista */
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
-    if( list == NULL ) return;
+    if( list == NULL || hash == NULL ) return;
+
     string_proc_node* node = string_proc_node_create(type, hash);
     if( node == NULL ) return;
 
     if( list->first == NULL ) {         // Lista vacía
         list->first = node;
         list->last = node;
+        return;
+    } elif( list->last == NULL ){                            // Lista no vacía
+        free(node);
+        return;
     } else {                            // Lista no vacía
         list->last->next = node;
         node->previous = list->last;
