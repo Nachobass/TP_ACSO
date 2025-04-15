@@ -84,44 +84,91 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
 
 
 /* Concatena los hashes de los nodos que coinciden con el tipo dado */
+// char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+//     if (list == NULL || hash == NULL) return NULL;
+
+//     // Copiamos el hash inicial (no lo modificamos)
+//     char* result = strdup(hash);
+//     if (result == NULL) return NULL;
+
+//     string_proc_node* current = list->first;
+
+//     // Prevención de ciclos: lista de nodos visitados (hasta 100)
+//     string_proc_node* visited[100] = {NULL};
+//     size_t visit_count = 0;
+
+//     while( current != NULL ) {
+//         // Chequeo de ciclos
+//         for( size_t i = 0; i < visit_count; i++ ){
+//             if( current == visited[i] ){
+//                 free(result);
+//                 return NULL;
+//             }
+//         }
+//         if( visit_count < 100 ) visited[visit_count++] = current;
+
+//         // Concatenamos si el tipo coincide
+//         if (current->type == type && current->hash != NULL) {
+//             char* new_result = str_concat(result, current->hash);
+//             if (new_result == NULL) {
+//                 free(result);
+//                 return NULL;
+//             }
+//             free(result);
+//             result = new_result;
+//         }
+
+//         current = current->next;
+//     }
+
+//     return result;  // El llamador debe liberar
+// }
+
+#define MAX_RESULT_LEN 1048576  // 1 MB máx, ajustable
+
 char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
     if (list == NULL || hash == NULL) return NULL;
 
-    // Copiamos el hash inicial (no lo modificamos)
-    char* result = strdup(hash);
-    if (result == NULL) return NULL;
+    // Detección de ciclo con algoritmo tortuga y liebre
+    string_proc_node* slow = list->first;
+    string_proc_node* fast = list->first;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+        if (slow == fast) {
+            // Ciclo detectado
+            return NULL;
+        }
+    }
 
+    // Primero, calcular longitud total para evitar múltiples realloc/str_concat
+    size_t total_len = strlen(hash);
     string_proc_node* current = list->first;
-
-    // Prevención de ciclos: lista de nodos visitados (hasta 100)
-    string_proc_node* visited[100] = {NULL};
-    size_t visit_count = 0;
-
-    while( current != NULL ) {
-        // Chequeo de ciclos
-        for( size_t i = 0; i < visit_count; i++ ){
-            if( current == visited[i] ){
-                free(result);
-                return NULL;
-            }
-        }
-        if( visit_count < 100 ) visited[visit_count++] = current;
-
-        // Concatenamos si el tipo coincide
+    while (current != NULL) {
         if (current->type == type && current->hash != NULL) {
-            char* new_result = str_concat(result, current->hash);
-            if (new_result == NULL) {
-                free(result);
-                return NULL;
-            }
-            free(result);
-            result = new_result;
+            total_len += strlen(current->hash);
+            if (total_len > MAX_RESULT_LEN) return NULL;  // Prevención de overflow
         }
-
         current = current->next;
     }
 
-    return result;  // El llamador debe liberar
+    // Asignar una sola vez
+    char* result = malloc(total_len + 1);
+    if (result == NULL) return NULL;
+
+    // Copiar hash inicial
+    strcpy(result, hash);
+
+    // Concatenar el resto
+    current = list->first;
+    while (current != NULL) {
+        if (current->type == type && current->hash != NULL) {
+            strcat(result, current->hash);
+        }
+        current = current->next;
+    }
+
+    return result;  // El llamador debe liberar esto
 }
 
 
