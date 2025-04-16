@@ -1,24 +1,3 @@
-/** Lista **/
-/* 
-// string_proc_list tiene dos punteros (8 bytes cada uno en x86_64), ocupando en total 16 bytes
-typedef struct string_proc_list_t {
-	struct string_proc_node_t* first;           // offset 0
-	struct string_proc_node_t* last;            // offset 8
-} string_proc_list;
-*/
-
-/** Nodo **/
-/* 
-// next (0), previous (8), type (16), padding (17-23), hash (24), ocupando en total 32 bytes
-typedef struct string_proc_node_t {
-	struct string_proc_node_t* next;
-	struct string_proc_node_t* previous;
-	uint8_t type;
-	char* hash;
-} string_proc_node;
-*/
-	
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -27,7 +6,7 @@ typedef struct string_proc_node_t {
 
 #define MAX_RESULT_LEN 1048576  // 1 MB máx
 
-/* Crea una nueva lista vacía */
+/* crea una nueva lista vacía */
 string_proc_list* string_proc_list_create(void){
     string_proc_list* list = malloc(sizeof(string_proc_list));
     if( list == NULL ) return NULL;
@@ -36,7 +15,7 @@ string_proc_list* string_proc_list_create(void){
     return list;
 }
 
-/* Crea un nuevo nodo apuntando al hash pasado */
+/* crea un nuevo nodo apuntando al hash pasado */
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
     if( hash == NULL ) return NULL;
     string_proc_node* node = malloc(sizeof(string_proc_node));
@@ -48,72 +27,32 @@ string_proc_node* string_proc_node_create(uint8_t type, char* hash){
     return node;
 }
 
-/* Agrega un nodo al final de la lista */
+/* agrega un nodo al final de la lista */
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
     if( list == NULL || hash == NULL ) return;
 
     string_proc_node* node = string_proc_node_create(type, hash);
     if( node == NULL ) return;
 
-    if( list->first == NULL ) {         // Lista vacía
+    if( list->first == NULL ) {                     // si la lista está vacía
         list->first = node;
         list->last = node;
         return;
-    } else if( list->last == NULL ){                            // Lista no vacía
+    } else if( list->last == NULL ){                // si se pasa una lista mal construida con node != NULL y last == NULL
         free(node);
         return;
-    } else {                            // Lista no vacía
+    } else {                                        // lista no vacía
         list->last->next = node;
         node->previous = list->last;
         list->last = node;
     }
 }
 
-/* Concatena los hashes de los nodos que coinciden con el tipo dado */
-// char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
-//     if( list == NULL || hash == NULL ) return NULL;
-
-//     // Detección de ciclos 
-//     string_proc_node* slow = list->first;
-//     string_proc_node* fast = list->first;
-//     while( fast && fast->next ){
-//         slow = slow->next;
-//         fast = fast->next->next;
-//         if( slow == fast ){
-//             return NULL;
-//         }
-//     }
-
-//     size_t total_len = strlen(hash);
-//     string_proc_node* current = list->first;
-//     while( current != NULL ){
-//         if( current->type == type && current->hash != NULL ){
-//             total_len += strlen(current->hash);
-//             if( total_len > MAX_RESULT_LEN ) return NULL;  // Prevención de overflow
-//         }
-//         current = current->next;
-//     }
-
-//     char* result = malloc(total_len + 1);
-//     if( result == NULL ) return NULL;
-
-//     strcpy(result, hash);
-
-//     // Concatenar el resto
-//     current = list->first;
-//     while( current != NULL ){
-//         if( current->type == type && current->hash != NULL ){
-//             strcat(result, current->hash);
-//         }
-//         current = current->next;
-//     }
-
-//     return result;
-// }
+/* concatena los hashes de los nodos que coinciden con el tipo dado */
 char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
     if( list == NULL || hash == NULL ) return NULL;
 
-    // detección de ciclo (tortuga y liebre)
+    // detección de ciclo
     string_proc_node* slow = list->first;
     string_proc_node* fast = list->first;
     while( fast && fast->next ){

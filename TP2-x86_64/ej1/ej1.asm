@@ -19,7 +19,7 @@ extern str_concat
 
 
 
-; orden de parametros RDI, RSI, RDX, RSX
+
 
 string_proc_list_create_asm:
     push rbp
@@ -44,33 +44,31 @@ string_proc_list_create_asm:
 
 
 
-; orden de parametros RDI, RSI, RDX, RSX
 
 string_proc_node_create_asm:
     push rbp
     mov rbp, rsp
-    push rbx                ; usamos rbx para guardar direcciones temporales
+    push rbx                    ; rbx para guardar direcciones temporales
     xor rax, rax
 
-    ; chequear si hash == NULL
-    cmp rsi, 0
+    cmp rsi, 0                  ; si hash == NULL
     je .return_null
 
     ; guardar argumentos
-    mov rdx, rsi        ; hash → rdx
-    movzx rcx, dil      ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
+    mov rdx, rsi                ; hash → rdx
+    movzx rcx, dil              ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
 
     mov rdi, 32
     call malloc
     test rax, rax
     je .return_null
 
-    mov rbx, rax            ; guardamos el puntero al nodo en rbx
+    mov rbx, rax                ; guardo el puntero al nodo en rbx
 
     mov qword [rbx + 0], 0      ; next
     mov qword [rbx + 8], 0      ; previous
-    mov byte  [rbx + 16], cl       ; type, cl es la parte baja de rcx
-    mov qword [rbx + 24], rdx      ; hash
+    mov byte  [rbx + 16], cl    ; type, cl es la parte baja de rcx
+    mov qword [rbx + 24], rdx   ; hash
 
     mov rax, rbx                ; devolver el puntero al nodo
 
@@ -86,7 +84,6 @@ string_proc_node_create_asm:
 
 
 
-; orden de parametros RDI, RSI, RDX, RSX
 
 string_proc_list_add_node_asm:
     ; rdi = list, rsi = type, rdx = hash
@@ -94,7 +91,7 @@ string_proc_list_add_node_asm:
     mov rbp, rsp
     xor rax, rax
 
-    test rdi, rdi           ; chequeo si list es NULL
+    test rdi, rdi           ; si list == NULL
     je .ret
 
     ; crear nodo: string_proc_node_create_asm(type, hash) preparo sus parametros
@@ -138,7 +135,6 @@ string_proc_list_add_node_asm:
 
 
 
-; orden de parametros RDI, RSI, RDX, RSX
 
 section .data
     MAX_RESULT_LEN equ 1048576  ; 1 MB máximo
@@ -150,10 +146,10 @@ string_proc_list_concat_asm:
     mov rbp, rsp
     xor rax, rax
 
-    test rdi, rdi            ; chequeo si list es NULL
+    test rdi, rdi            ; si list == NULL
     je .return_null
 
-    mov r8, rdi              ; guarda list en r8 antes de pisar rdi
+    mov r8, rdi              ; guardo list en r8 antes de pisar rdi
     mov r9b, sil             ; guardo type → r9b   (r9b:parte baja de r9), (sil:parte baja de rsi)
 
     mov rdi, rdx             ; strdup(hash)
@@ -164,7 +160,7 @@ string_proc_list_concat_asm:
     mov r10, rax             ; result (string concatenado) → r10
     mov r11, [r8]            ; current = list->first, es decir, el primer nodo de la lista
 
-    ; Detección de ciclo: tortuga y liebre
+    ; Detección de ciclo
     mov r12, r11             ; slow = current
     mov r13, r11             ; fast = current
 
@@ -186,11 +182,11 @@ string_proc_list_concat_asm:
 
 .no_cycle_detected:
 
-    ; Continuamos con la concatenación de cadenas
-    mov r11, [r8]            ; current = list->first
+    ; Continuo con la concatenación de cadenas
+    mov r11, [r8]                ; current = list->first
 
 .loop:
-    test r11, r11            ; chequeo si current es NULL
+    test r11, r11                ; chequeo si current es NULL
     je .done
 
     movzx r12b, byte [r11 + 16]  ; current->type
@@ -198,14 +194,14 @@ string_proc_list_concat_asm:
     jne .next                    ; si no coincide, salto a next
 
     mov r13, [r11 + 24]          ; current->hash
-    test r13, r13                ; chequeo si current->hash es NULL
+    test r13, r13                ; si current->hash == NULL
     je .next                     ; si es NULL, salto a next
 
-    ; Verificar si concatenar causaría overflow (MAX_RESULT_LEN)
+    ; Verificar si concatenar causaría overflow
     mov rsi, r13                 ; rsi = current->hash
     call strlen
     add rax, r10                 ; rax = current_len + add_len
-    cmp rax, MAX_RESULT_LEN      ; comprobamos si excede el tamaño máximo
+    cmp rax, MAX_RESULT_LEN      ; si excede el tamaño máximo
     ja .return_null              ; si excede, retorno NULL
 
     ; concatenar

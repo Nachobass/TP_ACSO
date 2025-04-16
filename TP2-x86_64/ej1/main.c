@@ -54,14 +54,16 @@ void test_list_concat()
 /** TESTS **/
 void test_node_create_null_hash() {
 	string_proc_node* node = string_proc_node_create_asm(1, NULL);
-	assert(node == NULL);  // No debe crearse el nodo
+	assert(node == NULL);  // no debe crearse el nodo
 }
+
 void test_add_node_null_inputs() {
-	string_proc_list_add_node_asm(NULL, 0, "hola");  // No debe romper
+	string_proc_list_add_node_asm(NULL, 0, "hola");  // no debe romper
 	string_proc_list * list = string_proc_list_create_asm();
-	string_proc_list_add_node_asm(list, 0, NULL);    // No debe romper
+	string_proc_list_add_node_asm(list, 0, NULL);    // no debe romper
 	string_proc_list_destroy(list);
 }
+
 void test_cycle_detection() {
 	string_proc_list * list = string_proc_list_create();
 
@@ -69,14 +71,15 @@ void test_cycle_detection() {
 	string_proc_list_add_node(list, 0, "b");
 	string_proc_list_add_node(list, 0, "c");
 
-	// Forzar un ciclo: apuntar el último al primero
+	// forzar un ciclo: apuntar el último al primero
 	list->last->next = list->first;
 
 	char* result = string_proc_list_concat(list, 0, "hash");
 	assert(result == NULL);  // debe detectar el ciclo y devolver NULL
 
-	// Como se hizo un ciclo, no se puede liberar correctamente
+	// como se hizo un ciclo, no se puede liberar correctamente
 }
+
 void test_concat_overflow() {
 	string_proc_list* list = string_proc_list_create();
 
@@ -93,6 +96,7 @@ void test_concat_overflow() {
 	free(big_string);
 	string_proc_list_destroy(list);
 }
+
 void test_concat_correctness() {
 	string_proc_list * list = string_proc_list_create();
 
