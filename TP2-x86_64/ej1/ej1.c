@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdint.h>
+#define _GNU_SOURCE
 #include <string.h>
 #include "ej1.h"
 
 
 #define MAX_RESULT_LEN 1048576  // 1 MB máx
-#define _GNU_SOURCE
+
 
 /* crea una nueva lista vacía */
 string_proc_list* string_proc_list_create(void){
