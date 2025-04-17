@@ -51,14 +51,12 @@ string_proc_list_create_asm:
 string_proc_node_create_asm:
     push rbp
     mov rbp, rsp
-    push rbx                    ; rbx para guardar direcciones temporales
     xor rax, rax
 
     cmp rsi, 0                  ; si hash == NULL
     je .return_null
 
     ; guardar argumentos
-    mov rdx, rsi                ; hash → rdx
     movzx rcx, dil              ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
 
     mov rdi, 32
@@ -66,11 +64,10 @@ string_proc_node_create_asm:
     test rax, rax
     je .return_null
 
-    mov rbx, rax                ; guardo el puntero al nodo en rbx
 
-    mov qword [rbx + 0], 0      ; next
-    mov qword [rbx + 8], 0      ; previous
-    mov byte  [rbx + 16], cl    ; type, cl es la parte baja de rcx
+    mov qword [rax], 0      ; next
+    mov qword [rax + 8], 0      ; previous
+    mov byte  [rax + 16], cl    ; type
     mov qword [rbx + 24], rdx   ; hash
 
     mov rax, rbx                ; devolver el puntero al nodo
@@ -81,7 +78,7 @@ string_proc_node_create_asm:
 
 .return_null:
     xor rax, rax
-    pop rbx
+    mov rsp, rbp
     pop rbp
     ret
 
