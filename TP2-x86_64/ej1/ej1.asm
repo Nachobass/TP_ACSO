@@ -67,9 +67,8 @@ string_proc_node_create_asm:
 
     mov qword [rax], 0      ; next
     mov qword [rax + 8], 0      ; previous
-    mov qword  [rax + 16], rsi   ; hash
-    mov byte [rax + 24], cl    ; type
-    
+    mov byte  [rax + 16], cl    ; type
+    mov qword [rax + 24], rsi   ; hash
 
     mov rsp, rbp
     pop rbp
