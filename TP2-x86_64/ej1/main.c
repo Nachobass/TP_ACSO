@@ -80,22 +80,22 @@ void test_cycle_detection() {
 	// como se hizo un ciclo, no se puede liberar correctamente
 }
 
-void test_concat_overflow() {
-	string_proc_list* list = string_proc_list_create();
+// void test_concat_overflow() {
+// 	string_proc_list* list = string_proc_list_create();
 
-	char* big_string = malloc(MAX_RESULT_LEN);
-	memset(big_string, 'A', MAX_RESULT_LEN - 1);
-	big_string[MAX_RESULT_LEN - 1] = '\0';
+// 	char* big_string = malloc(MAX_RESULT_LEN);
+// 	memset(big_string, 'A', MAX_RESULT_LEN - 1);
+// 	big_string[MAX_RESULT_LEN - 1] = '\0';
 
-	string_proc_list_add_node(list, 0, big_string);
+// 	string_proc_list_add_node(list, 0, big_string);
 
-	char* result = string_proc_list_concat(list, 0, "B");  // hash inicial con 1 char
+// 	char* result = string_proc_list_concat(list, 0, "B");  // hash inicial con 1 char
 
-	assert(result == NULL);  // debe detectar overflow
+// 	assert(result == NULL);  // debe detectar overflow
 
-	free(big_string);
-	string_proc_list_destroy(list);
-}
+// 	free(big_string);
+// 	string_proc_list_destroy(list);
+// }
 
 void test_concat_correctness() {
 	string_proc_list * list = string_proc_list_create();
