@@ -345,7 +345,7 @@ string_proc_list_concat_asm:
     jmp     .iterate_nodes
 
 .done_iteration:
-    mov     rax, qword [rbp-24]         ; devolvuelvo el string concatenado
+    mov     rax, qword [rbp-24]         ; devuelvo el string concatenado
 
 .return:
     leave
