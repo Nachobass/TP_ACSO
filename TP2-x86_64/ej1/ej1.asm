@@ -103,7 +103,7 @@ string_proc_list_add_node_asm:
         mov     rdx, QWORD [rbp-40]
         mov     rsi, rdx
         mov     edi, eax
-        call    string_proc_node_create
+        call    string_proc_node_create_asm
         mov     QWORD [rbp-8], rax
         cmp     QWORD [rbp-8], 0
         je      .L17
