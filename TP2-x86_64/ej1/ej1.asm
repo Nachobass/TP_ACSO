@@ -25,296 +25,258 @@ extern strcpy
 
 
 string_proc_list_create_asm:
-    push rbp
-    mov rbp, rsp
-    xor rax, rax
+        push    rbp
+        mov     rbp, rsp
 
-    mov rdi, 16                     ; tamaño de la lista
-    call malloc                     ; malloc(16) retorna rax que es la dirección
-    test rax, rax                   ; si malloc falla, rax = NULL
-    je .return_null
+        sub     rsp, 16
+        mov     edi, 16
+        call    malloc
+        mov     QWORD [rbp-8], rax
+        cmp     QWORD [rbp-8], 0
+        jne     .L4
 
-    mov qword [rax], 0           ; first, qword es 8 bytes
-    mov qword [rax + 8], 0       ; last
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
-.return_null:
-    xor rax, rax
-    mov rsp, rbp
-    pop rbp
-    ret
-
+        mov     eax, 0
+        jmp     .L5
+.L4:
+        mov     rax, QWORD [rbp-8]
+        mov     QWORD [rax], 0
+        mov     rax, QWORD [rbp-8]
+        mov     QWORD [rax+8], 0
+        mov     rax, QWORD [rbp-8]
+.L5:
+        leave
+        ret
 
 
 
 string_proc_node_create_asm:
-    push rbp
-    mov rbp, rsp
-    xor rax, rax
-
-    cmp rsi, 0                  ; si hash == NULL
-    je .return_null
-
-    ; guardar argumentos
-    movzx rcx, dil              ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
-
-    mov rdi, 32
-    call malloc
-    test rax, rax
-    je .return_null
-
-
-    mov qword [rax], 0      ; next
-    mov qword [rax + 8], 0      ; previous
-    mov byte  [rax + 16], dil    ; type
-    mov qword [rax + 24], rsi   ; hash
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
-.return_null:
-    xor rax, rax
-    mov rsp, rbp
-    pop rbp
-    ret
+        push    rbp
+        mov     rbp, rsp
+        sub     rsp, 32
+        mov     eax, edi
+        mov     QWORD [rbp-32], rsi
+        mov     BYTE [rbp-20], al
+        cmp     QWORD [rbp-32], 0
+        jne     .L7
+        mov     eax, 0
+        jmp     .L8
+.L7:
+        mov     edi, 32
+        call    malloc
+        mov     QWORD [rbp-8], rax
+        cmp     QWORD [rbp-8], 0
+        jne     .L9
+        mov     eax, 0
+        jmp     .L8
+.L9:
+        mov     rax, QWORD [rbp-8]
+        movzx   edx, BYTE [rbp-20]
+        mov     BYTE [rax+16], dl
+        mov     rax, QWORD [rbp-8]
+        mov     rdx, QWORD [rbp-32]
+        mov     QWORD [rax+24], rdx
+        mov     rax, QWORD [rbp-8]
+        mov     QWORD [rax], 0
+        mov     rax, QWORD [rbp-8]
+        mov     QWORD [rax+8], 0
+        mov     rax, QWORD [rbp-8]
+.L8:
+        leave
+        ret
 
 
 
 
 string_proc_list_add_node_asm:
-    ; rdi = list, sil = type, rdx = hash
-
-    push rbp
-    mov rbp, rsp
-
-    ; Verificación inicial: list == NULL || hash == NULL
-    test rdi, rdi
-    je .ret
-    test rdx, rdx
-    je .ret
-
-    ; Guardar valores en registros temporales
-    mov r8, rdi         ; r8 = list (usaremos este para operar con la lista)
-    mov r9, rdx         ; r9 = hash
-    xor rdi, rdi        ; limpiar rdi
-    mov dil, sil        ; poner type en dil
-    mov rsi, r9         ; rsi = hash (2do arg para la función create)
-
-    ; Llamar a string_proc_node_create(type, hash)
-    call string_proc_node_create_asm
-    test rax, rax
-    je .ret             ; si node == NULL, salimos
-
-    ; rax contiene el nodo creado
-    mov r10, rax        ; r10 = node
-
-    ; if (list->first == NULL)
-    mov r11, [r8]       ; r11 = list->first
-    test r11, r11
-    je .empty_list      ; si es NULL → lista vacía
-
-    ; Lista no vacía:
-    mov r12, [r8 + 8]   ; r12 = list->last
-    mov qword [r12], r10      ; list->last->next = node
-    mov qword [r10 + 8], r12  ; node->previous = list->last
-    mov qword [r8 + 8], r10   ; list->last = node
-    jmp .done
-
-.empty_list:
-    ; lista vacía: poner first y last al nuevo nodo
-    mov qword [r8], r10       ; list->first = node
-    mov qword [r8 + 8], r10   ; list->last = node
-    jmp .done
-
-.done:
-    mov rsp, rbp
-    pop rbp
-    ret
-
-.ret:
-    mov rsp, rbp
-    pop rbp
-    ret
-
-
+        push    rbp
+        mov     rbp, rsp
+        sub     rsp, 48
+        mov     QWORD [rbp-24], rdi
+        mov     eax, esi
+        mov     QWORD [rbp-40], rdx
+        mov     BYTE [rbp-28], al
+        cmp     QWORD [rbp-24], 0
+        je      .L16
+        cmp     QWORD [rbp-40], 0
+        je      .L16
+        movzx   eax, BYTE [rbp-28]
+        mov     rdx, QWORD [rbp-40]
+        mov     rsi, rdx
+        mov     edi, eax
+        call    string_proc_node_create
+        mov     QWORD [rbp-8], rax
+        cmp     QWORD [rbp-8], 0
+        je      .L17
+        mov     rax, QWORD [rbp-24]
+        mov     rax, QWORD [rax]
+        test    rax, rax
+        jne     .L15
+        mov     rax, QWORD [rbp-24]
+        mov     rdx, QWORD [rbp-8]
+        mov     QWORD [rax], rdx
+        mov     rax, QWORD [rbp-24]
+        mov     rdx, QWORD [rbp-8]
+        mov     QWORD [rax+8], rdx
+        jmp     .L10
+.L15:
+        mov     rax, QWORD [rbp-24]
+        mov     rax, QWORD [rax+8]
+        mov     rdx, QWORD [rbp-8]
+        mov     QWORD [rax], rdx
+        mov     rax, QWORD [rbp-24]
+        mov     rdx, QWORD [rax+8]
+        mov     rax, QWORD [rbp-8]
+        mov     QWORD [rax+8], rdx
+        mov     rax, QWORD [rbp-24]
+        mov     rdx, QWORD [rbp-8]
+        mov     QWORD [rax+8], rdx
+        jmp     .L10
+.L16:
+        nop
+        jmp     .L10
+.L17:
+        nop
+.L10:
+        leave
+        ret
 
 
 
 
 
 string_proc_list_concat_asm:
-    ; rdi = list, rsi = type, rdx = hash
-    push rbp
-    mov rbp, rsp
-    sub rsp, 96            ; reservar espacio local
-
-    mov [rbp-72], rdi      ; list
-    movzx eax, sil         ; pasar type como 8 bits → eax
-    mov [rbp-88], rdx      ; hash
-    mov [rbp-76], al       ; guardar type en [rbp-76]
-
-    cmp qword [rbp-72], 0
-    je .return_null
-    cmp qword [rbp-88], 0
-    jne .continue
-.return_null:
-    mov rax, 0
-    jmp .done
-
-.continue:
-    mov rax, [rbp-72]
-    mov rax, [rax]
-    mov [rbp-8], rax       ; aux1
-    mov rax, [rbp-72]
-    mov rax, [rax]
-    mov [rbp-16], rax      ; current
-
-.loop_check:
-    ; verificar que fast y fast->next no sean NULL
-    mov rax, [rbp-16]
-    test rax, rax
-    je .init_result
-    mov rax, [rax]
-    test rax, rax
-    je .init_result
-
-    ; slow = slow->next
-    mov rax, [rbp-8]
-    mov rax, [rax]
-    mov [rbp-8], rax
-
-    ; fast = fast->next->next
-    mov rax, [rbp-16]
-    mov rax, [rax]
-    mov rax, [rax]
-    mov [rbp-16], rax
-
-    ; comparar slow y fast
-    mov rax, [rbp-8]
-    cmp rax, [rbp-16]
-    jne .loop_check
-
-    mov rax, 0
-    jmp .done
-
-.loop_start:
-    cmp qword [rbp-16], 0
-    je .init_result
-
-    mov rax, [rbp-16]
-    mov rax, [rax]
-    test rax, rax
-    jne .loop_check
-
-.init_result:
-    mov rax, [rbp-88]
-    mov rdi, rax
-    call strlen
-    mov [rbp-48], rax
-
-    mov rax, [rbp-48]
-    add rax, 1
-    mov rdi, rax
-    call malloc
-    mov [rbp-24], rax
-
-    cmp qword [rbp-24], 0
-    jne .copy_hash
-    mov rax, 0
-    jmp .done
-
-.copy_hash:
-    mov rax, [rbp-48]
-    lea rdx, [rax+1]
-    mov rcx, [rbp-88]
-    mov rsi, rcx
-    mov rdi, [rbp-24]
-    call memcpy
-
-    cmp qword [rbp-24], 0
-    jne .prepare_loop
-    mov rax, 0
-    jmp .done
-
-.prepare_loop:
-    mov rdi, [rbp-24]
-    call strlen
-    mov [rbp-32], rax
-
-    mov rax, [rbp-72]
-    mov rax, [rax]
-    mov [rbp-40], rax
-
-.loop_nodes:
-    cmp qword [rbp-40], 0
-    je .end_loop
-
-    mov rax, [rbp-40]
-    movzx eax, byte [rax+16]
-    cmp al, [rbp-76]
-    jne .next_node
-
-    mov rax, [rbp-40]
-    mov rax, [rax+24]
-    test rax, rax
-    je .next_node
-
-    mov rdi, [rbp-40]
-    mov rdi, [rdi+24]
-    call strlen
-    mov [rbp-56], rax
-
-    mov rdx, [rbp-32]
-    mov rax, [rbp-56]
-    add rax, rdx
-    cmp rax, 1048576
-    jbe .concat_ok
-
-    ; si supera el tamaño permitido
-    mov rdi, [rbp-24]
-    call free
-    mov rax, 0
-    jmp .done
-
-.concat_ok:
-    mov rdx, [rbp-40]
-    mov rdx, [rdx+24]
-    mov rsi, rdx
-    mov rdi, [rbp-24]
-    call str_concat
-    mov [rbp-64], rax
-
-    cmp qword [rbp-64], 0
-    jne .replace_result
-
-    mov rdi, [rbp-24]
-    call free
-    mov rax, 0
-    jmp .done
-
-.replace_result:
-    mov rdi, [rbp-24]
-    call free
-    mov rax, [rbp-64]
-    mov [rbp-24], rax
-
-    mov rax, [rbp-56]
-    add [rbp-32], rax
-
-.next_node:
-    mov rax, [rbp-40]
-    mov rax, [rax]
-    mov [rbp-40], rax
-    jmp .loop_nodes
-
-.end_loop:
-    mov rax, [rbp-24]
-
-.done:
-    mov rsp, rbp
-    pop rbp
-    ret
+        push    rbp
+        mov     rbp, rsp
+        sub     rsp, 96
+        mov     QWORD [rbp-72], rdi
+        mov     eax, esi
+        mov     QWORD [rbp-88], rdx
+        mov     BYTE [rbp-76], al
+        cmp     QWORD [rbp-72], 0
+        je      .L19
+        cmp     QWORD [rbp-88], 0
+        jne     .L20
+.L19:
+        mov     eax, 0
+        jmp     .L21
+.L20:
+        mov     rax, QWORD [rbp-72]
+        mov     rax, QWORD [rax]
+        mov     QWORD [rbp-8], rax
+        mov     rax, QWORD [rbp-72]
+        mov     rax, QWORD [rax]
+        mov     QWORD [rbp-16], rax
+        jmp     .L22
+.L24:
+        mov     rax, QWORD [rbp-8]
+        mov     rax, QWORD [rax]
+        mov     QWORD [rbp-8], rax
+        mov     rax, QWORD [rbp-16]
+        mov     rax, QWORD [rax]
+        mov     rax, QWORD [rax]
+        mov     QWORD [rbp-16], rax
+        mov     rax, QWORD [rbp-8]
+        cmp     rax, QWORD [rbp-16]
+        jne     .L22
+        mov     eax, 0
+        jmp     .L21
+.L22:
+        cmp     QWORD [rbp-16], 0
+        je      .L23
+        mov     rax, QWORD [rbp-16]
+        mov     rax, QWORD [rax]
+        test    rax, rax
+        jne     .L24
+.L23:
+        mov     rax, QWORD [rbp-88]
+        mov     rdi, rax
+        call    strlen
+        mov     QWORD [rbp-48], rax
+        mov     rax, QWORD [rbp-48]
+        add     rax, 1
+        mov     rdi, rax
+        call    malloc
+        mov     QWORD [rbp-24], rax
+        cmp     QWORD [rbp-24], 0
+        jne     .L25
+        mov     eax, 0
+        jmp     .L21
+.L25:
+        mov     rax, QWORD [rbp-48]
+        lea     rdx, [rax+1]
+        mov     rcx, QWORD [rbp-88]
+        mov     rax, QWORD [rbp-24]
+        mov     rsi, rcx
+        mov     rdi, rax
+        call    memcpy
+        cmp     QWORD [rbp-24], 0
+        jne     .L26
+        mov     eax, 0
+        jmp     .L21
+.L26:
+        mov     rax, QWORD [rbp-24]
+        mov     rdi, rax
+        call    strlen
+        mov     QWORD [rbp-32], rax
+        mov     rax, QWORD [rbp-72]
+        mov     rax, QWORD [rax]
+        mov     QWORD [rbp-40], rax
+        jmp     .L27
+.L31:
+        mov     rax, QWORD [rbp-40]
+        movzx   eax, BYTE [rax+16]
+        cmp     BYTE [rbp-76], al
+        jne     .L28
+        mov     rax, QWORD [rbp-40]
+        mov     rax, QWORD [rax+24]
+        test    rax, rax
+        je      .L28
+        mov     rax, QWORD [rbp-40]
+        mov     rax, QWORD [rax+24]
+        mov     rdi, rax
+        call    strlen
+        mov     QWORD [rbp-56], rax
+        mov     rdx, QWORD [rbp-32]
+        mov     rax, QWORD [rbp-56]
+        add     rax, rdx
+        cmp     rax, 1048576
+        jbe     .L29
+        mov     rax, QWORD [rbp-24]
+        mov     rdi, rax
+        call    free
+        mov     eax, 0
+        jmp     .L21
+.L29:
+        mov     rax, QWORD [rbp-40]
+        mov     rdx, QWORD [rax+24]
+        mov     rax, QWORD [rbp-24]
+        mov     rsi, rdx
+        mov     rdi, rax
+        call    str_concat
+        mov     QWORD [rbp-64], rax
+        cmp     QWORD [rbp-64], 0
+        jne     .L30
+        mov     rax, QWORD [rbp-24]
+        mov     rdi, rax
+        call    free
+        mov     eax, 0
+        jmp     .L21
+.L30:
+        mov     rax, QWORD [rbp-24]
+        mov     rdi, rax
+        call    free
+        mov     rax, QWORD [rbp-64]
+        mov     QWORD [rbp-24], rax
+        mov     rax, QWORD [rbp-56]
+        add     QWORD [rbp-32], rax
+.L28:
+        mov     rax, QWORD [rbp-40]
+        mov     rax, QWORD [rax]
+        mov     QWORD [rbp-40], rax
+.L27:
+        cmp     QWORD [rbp-40], 0
+        jne     .L31
+        mov     rax, QWORD [rbp-24]
+.L21:
+        leave
+        ret
