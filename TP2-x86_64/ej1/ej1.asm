@@ -57,7 +57,6 @@ string_proc_node_create_asm:
     je .return_null
 
     ; guardar argumentos
-    movzx rcx, dil              ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
 
     mov rdi, 32
     call malloc
@@ -67,7 +66,7 @@ string_proc_node_create_asm:
 
     mov qword [rax], 0      ; next
     mov qword [rax + 8], 0      ; previous
-    mov byte  [rax + 16], cl    ; type
+    mov byte  [rax + 16], dil    ; type
     mov qword [rax + 24], rsi   ; hash
 
     mov rsp, rbp
