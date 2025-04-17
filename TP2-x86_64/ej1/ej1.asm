@@ -150,72 +150,163 @@ string_proc_list_add_node_asm:
 
 
 string_proc_list_concat_asm:
-     ; rdi = list, rsi = type, rdx = hash
-     push rbp
-     mov rbp, rsp
-     xor rax, rax
- 
-     test rdi, rdi        ; chequeo si list es NULL
-     je .return_null
- 
-     mov r8, rdi          ; guarda list en r8 antes de pisar rdi
-     mov r9b, sil         ; guardo type → r9b   (r9b:parte baja de r9), (sil:parte baja de rsi)
- 
-     ; reemplazo de strdup(hash)
-     mov rdi, rdx         ; rdi = hash
-     call strlen          ; calcula strlen(hash)
-     mov r10, rax         ; r10 = longitud de hash
+    ; rdi = list, rsi = type, rdx = hash
+    push rbp
+    mov rbp, rsp
+    sub rsp, 96            ; reservar espacio local
 
-     inc r10              ; +1 para el '\0'
-     mov rdi, r10         ; rdi = longitud + 1
-     call malloc          ; reserva memoria para la copia del hash
-     test rax, rax        ; chequeo si malloc falló
-     je .return_null
- 
-     mov r11, rax         ; result (string concatenado) → r11
- 
-     ; copiar el hash a result
-     mov rdi, r11         ; destino: r11
-     mov rsi, rdx         ; fuente: rdx (hash)
-     call strcpy          ; copio hash a result
- 
-     ; ahora r11 tiene la copia del hash
-     mov r10, r11         ; guardo el resultado (r10 es el resultado concatenado)
+    mov [rbp-72], rdi      ; list
+    movzx eax, sil         ; pasar type como 8 bits → eax
+    mov [rbp-88], rdx      ; hash
+    mov [rbp-76], al       ; guardar type en [rbp-76]
 
-     mov r12, [r8]        ; current = list->first, es decir, el primer nodo de la lista
- 
- .loop:
-     test r12, r12        ; chequeo si current es NULL
-     je .done
- 
-     movzx r13, byte [r12 + 16]   ; current->type
-     cmp r13b, r9b                 ; comparo current->type con type buscado
-     jne .next                     ; si no coincide, salto a next
- 
-     mov r14, [r12 + 24]           ; current->hash
-     test r14, r14                 ; chequeo si current->hash es NULL
-     je .next                      ; si es NULL, salto a next
- 
-     ; concatenar
-     mov rdi, r10                  ; rdi = string actual (result)
-     mov rsi, r14                  ; rsi = nuevo string a concatenar
-     call str_concat               ; rax = nuevo result
- 
-     mov rdi, r10                  ; libero el string anterior
-     call free
- 
-     mov r10, rax                  ; guardo el nuevo string concatenado en r10
- 
- .next:
-     mov r12, [r12]                ; current = current->next, avanzo de nodo
-     jmp .loop
- 
- .done:
-     mov rax, r10
-     pop rbp
-     ret
- 
- .return_null:
-     xor rax, rax
-     pop rbp
-     ret
+    cmp qword [rbp-72], 0
+    je .return_null
+    cmp qword [rbp-88], 0
+    jne .continue
+.return_null:
+    mov rax, 0
+    jmp .done
+
+.continue:
+    mov rax, [rbp-72]
+    mov rax, [rax]
+    mov [rbp-8], rax       ; aux1
+    mov rax, [rbp-72]
+    mov rax, [rax]
+    mov [rbp-16], rax      ; current
+
+.loop_check:
+    mov rax, [rbp-8]
+    mov rax, [rax]
+    mov [rbp-8], rax
+
+    mov rax, [rbp-16]
+    mov rax, [rax]
+    mov rax, [rax]
+    mov [rbp-16], rax
+
+    mov rax, [rbp-8]
+    cmp rax, [rbp-16]
+    jne .loop_check
+
+    mov rax, 0
+    jmp .done
+
+.loop_start:
+    cmp qword [rbp-16], 0
+    je .init_result
+
+    mov rax, [rbp-16]
+    mov rax, [rax]
+    test rax, rax
+    jne .loop_check
+
+.init_result:
+    mov rax, [rbp-88]
+    mov rdi, rax
+    call strlen
+    mov [rbp-48], rax
+
+    mov rax, [rbp-48]
+    add rax, 1
+    mov rdi, rax
+    call malloc
+    mov [rbp-24], rax
+
+    cmp qword [rbp-24], 0
+    jne .copy_hash
+    mov rax, 0
+    jmp .done
+
+.copy_hash:
+    mov rax, [rbp-48]
+    lea rdx, [rax+1]
+    mov rcx, [rbp-88]
+    mov rsi, rcx
+    mov rdi, [rbp-24]
+    call memcpy
+
+    cmp qword [rbp-24], 0
+    jne .prepare_loop
+    mov rax, 0
+    jmp .done
+
+.prepare_loop:
+    mov rdi, [rbp-24]
+    call strlen
+    mov [rbp-32], rax
+
+    mov rax, [rbp-72]
+    mov rax, [rax]
+    mov [rbp-40], rax
+
+.loop_nodes:
+    cmp qword [rbp-40], 0
+    je .end_loop
+
+    mov rax, [rbp-40]
+    movzx eax, byte [rax+16]
+    cmp al, [rbp-76]
+    jne .next_node
+
+    mov rax, [rbp-40]
+    mov rax, [rax+24]
+    test rax, rax
+    je .next_node
+
+    mov rdi, [rbp-40]
+    mov rdi, [rdi+24]
+    call strlen
+    mov [rbp-56], rax
+
+    mov rdx, [rbp-32]
+    mov rax, [rbp-56]
+    add rax, rdx
+    cmp rax, 1048576
+    jbe .concat_ok
+
+    ; si supera el tamaño permitido
+    mov rdi, [rbp-24]
+    call free
+    mov rax, 0
+    jmp .done
+
+.concat_ok:
+    mov rdx, [rbp-40]
+    mov rdx, [rdx+24]
+    mov rsi, rdx
+    mov rdi, [rbp-24]
+    call str_concat
+    mov [rbp-64], rax
+
+    cmp qword [rbp-64], 0
+    jne .replace_result
+
+    mov rdi, [rbp-24]
+    call free
+    mov rax, 0
+    jmp .done
+
+.replace_result:
+    mov rdi, [rbp-24]
+    call free
+    mov rax, [rbp-64]
+    mov [rbp-24], rax
+
+    mov rax, [rbp-56]
+    add [rbp-32], rax
+
+.next_node:
+    mov rax, [rbp-40]
+    mov rax, [rax]
+    mov [rbp-40], rax
+    jmp .loop_nodes
+
+.end_loop:
+    mov rax, [rbp-24]
+
+.done:
+    mov rsp, rbp
+    pop rbp
+    ret
