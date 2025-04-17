@@ -85,59 +85,55 @@ string_proc_node_create_asm:
 
 string_proc_list_add_node_asm:
     ; rdi = list, sil = type, rdx = hash
+
     push rbp
     mov rbp, rsp
 
-    ; Verificar si list == NULL || hash == NULL
+    ; Verificación inicial: list == NULL || hash == NULL
     test rdi, rdi
-    je .return
+    je .ret
     test rdx, rdx
-    je .return
+    je .ret
 
-    ; Guardar registros usados
-    mov r8, rdi       ; r8 = list
-    movzx r9d, sil    ; r9d = (uint8_t)type
+    ; Guardar valores en registros temporales
+    mov r8, rdi         ; r8 = list (usaremos este para operar con la lista)
+    mov r9, rdx         ; r9 = hash
+    movzx edi, sil      ; edi = (uint32_t) type (1er arg para la función create)
+    mov rsi, r9         ; rsi = hash (2do arg para la función create)
 
-    ; Crear nodo: string_proc_node_create(type, hash)
-    movzx edi, sil    ; 1er parámetro: type → edi
-    mov rsi, rdx      ; 2do parámetro: hash → rsi
+    ; Llamar a string_proc_node_create(type, hash)
     call string_proc_node_create_asm
     test rax, rax
-    je .return        ; si node == NULL, salgo
+    je .ret             ; si node == NULL, salimos
 
-    ; rax = node
-    mov r10, rax      ; r10 = node
+    ; rax contiene el nodo creado
+    mov r10, rax        ; r10 = node
 
     ; if (list->first == NULL)
-    mov r11, [r8]     ; r11 = list->first
+    mov r11, [r8]       ; r11 = list->first
     test r11, r11
-    je .empty_list
+    je .empty_list      ; si es NULL → lista vacía
 
-    ; else: lista no vacía
-    ; list->last->next = node
-    mov r12, [r8 + 8]     ; r12 = list->last
-    mov [r12], r10        ; r12->next = node
-
-    ; node->previous = list->last
-    mov [r10 + 8], r12    ; node->previous = list->last
-
-    ; list->last = node
-    mov [r8 + 8], r10     ; list->last = node
+    ; Lista no vacía:
+    mov r12, [r8 + 8]   ; r12 = list->last
+    mov [r12], r10      ; list->last->next = node
+    mov [r10 + 8], r12  ; node->previous = list->last
+    mov [r8 + 8], r10   ; list->last = node
     jmp .done
 
 .empty_list:
-    ; list->first = node
-    mov [r8], r10
-    ; list->last = node
-    mov [r8 + 8], r10
+    ; lista vacía: poner first y last al nuevo nodo
+    mov [r8], r10       ; list->first = node
+    mov [r8 + 8], r10   ; list->last = node
 
 .done:
     pop rbp
     ret
 
-.return:
+.ret:
     pop rbp
     ret
+
 
 
 
