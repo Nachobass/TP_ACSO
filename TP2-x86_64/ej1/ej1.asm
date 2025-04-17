@@ -99,7 +99,8 @@ string_proc_list_add_node_asm:
     movzx r9d, sil    ; r9d = (uint8_t)type
 
     ; Crear nodo: string_proc_node_create(type, hash)
-    movzx edi, sil    ; 1er parámetro: type → edi
+    mov edi, 0
+    mov dil, sil      ; 1er parámetro: type → edi
     mov rsi, rdx      ; 2do parámetro: hash → rsi
     call string_proc_node_create_asm
     test rax, rax
