@@ -103,7 +103,7 @@ string_proc_list_add_node:
      ; llamar a string_proc_node_create(type, hash)
      mov rdi, rsi         ; rdi = type
      mov rsi, rdx         ; rsi = hash
-     call string_proc_node_create
+     call string_proc_node_create_asm
      test rax, rax        ; chequeo si node es NULL
      je .return            ; si es NULL, retorno
  
