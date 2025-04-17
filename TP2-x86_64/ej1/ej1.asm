@@ -59,7 +59,7 @@ string_proc_node_create_asm:
     ; guardar argumentos
     movzx rcx, dil              ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
 
-    mov edi, 32
+    mov rdi, 32
     call malloc
     test rax, rax
     je .return_null
@@ -99,8 +99,7 @@ string_proc_list_add_node_asm:
     movzx r9d, sil    ; r9d = (uint8_t)type
 
     ; Crear nodo: string_proc_node_create(type, hash)
-    mov edi, 0
-    mov dil, sil      ; 1er parámetro: type → edi
+    movzx edi, sil    ; 1er parámetro: type → edi
     mov rsi, rdx      ; 2do parámetro: hash → rsi
     call string_proc_node_create_asm
     test rax, rax
