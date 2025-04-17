@@ -138,94 +138,59 @@ string_proc_list_add_node_asm:
 
 
 
-section .data
-    MAX_RESULT_LEN equ 1048576  ; 1 MB máximo
-
-section .text
 string_proc_list_concat_asm:
-    ; rdi = list, rsi = type, rdx = hash
-    push rbp
-    mov rbp, rsp
-    xor rax, rax
-
-    test rdi, rdi            ; si list == NULL
-    je .return_null
-
-    mov r8, rdi              ; guardo list en r8 antes de pisar rdi
-    mov r9b, sil             ; guardo type → r9b   (r9b:parte baja de r9), (sil:parte baja de rsi)
-
-    mov rdi, rdx             ; strdup(hash)
-    call strdup
-    test rax, rax            ; rax = resultado del strdup, si falla retorno NULL
-    je .return_null
-
-    mov r10, rax             ; result (string concatenado) → r10
-    mov r11, [r8]            ; current = list->first, es decir, el primer nodo de la lista
-
-    ; Detección de ciclo
-    mov r12, r11             ; slow = current
-    mov r13, r11             ; fast = current
-
-.loop_cycle_check:
-    test r13, r13            ; fast == NULL?
-    je .no_cycle_detected
-    mov r13, [r13 + 8]       ; fast = fast->next->next
-    test r13, r13
-    je .no_cycle_detected
-    mov r13, [r13 + 8]
-    mov r14, [r12 + 8]       ; slow = slow->next
-    test r12, r12
-    je .no_cycle_detected
-    cmp r12, r13             ; slow == fast?
-    je .return_null          ; ciclo detectado
-
-    mov r12, r14
-    jmp .loop_cycle_check
-
-.no_cycle_detected:
-
-    ; Continuo con la concatenación de cadenas
-    mov r11, [r8]                ; current = list->first
-
-.loop:
-    test r11, r11                ; chequeo si current es NULL
-    je .done
-
-    movzx r12b, byte [r11 + 16]  ; current->type
-    cmp r12b, r9b                ; comparo current->type con type buscado
-    jne .next                    ; si no coincide, salto a next
-
-    mov r13, [r11 + 24]          ; current->hash
-    test r13, r13                ; si current->hash == NULL
-    je .next                     ; si es NULL, salto a next
-
-    ; Verificar si concatenar causaría overflow
-    mov rsi, r13                 ; rsi = current->hash
-    call strlen
-    add rax, r10                 ; rax = current_len + add_len
-    cmp rax, MAX_RESULT_LEN      ; si excede el tamaño máximo
-    ja .return_null              ; si excede, retorno NULL
-
-    ; concatenar
-    mov rdi, r10                 ; rdi = string actual (result)
-    mov rsi, r13                 ; rsi = nuevo string a concatenar
-    call str_concat              ; rax = nuevo result
-
-    mov rdi, r10                 ; libero el string anterior
-    call free
-
-    mov r10, rax                 ; guardo el nuevo string concatenado en r10
-
-.next:
-    mov r11, [r11]               ; current = current->next, avanzo de nodo
-    jmp .loop
-
-.done:
-    mov rax, r10
-    pop rbp
-    ret
-
-.return_null:
-    xor rax, rax
-    pop rbp
-    ret
+     ; rdi = list, rsi = type, rdx = hash
+     push rbp
+     mov rbp, rsp
+     xor rax, rax
+ 
+     test rdi, rdi        ; chequeo si list es NULL
+     je .return_null
+ 
+     mov r8, rdi          ; guarda list en r8 antes de pisar rdi
+     mov r9b, sil         ; guardo type → r9b   (r9b:parte baja de r9), (sil:parte baja de rsi)
+ 
+     mov rdi, rdx         ; strdup(hash)
+     call strdup
+     test rax, rax        ; rax = resultado del strdup, si falla retorno NULL
+     je .return_null
+ 
+     mov r10, rax         ; result (string concatenado) → r10
+ 
+     mov r11, [r8]        ; current = list->first, es decir, el primer nodo de la lista
+ 
+ .loop:
+     test r11, r11       ; chequeo si current es NULL
+     je .done
+ 
+     movzx r12b, byte [r11 + 16]   ; current->type
+     cmp r12b, r9b                 ; comparo current->type con type buscado
+     jne .next                     ; si no coincide, salto a next
+ 
+     mov r13, [r11 + 24]           ; current->hash
+     test r13, r13                 ; chequeo si current->hash es NULL
+     je .next                      ; si es NULL, salto a next
+ 
+     ; concatenar
+     mov rdi, r10                  ; rdi = string actual (result)
+     mov rsi, r13                  ; rsi = nuevo string a concatenar
+     call str_concat               ; rax = nuevo result
+ 
+     mov rdi, r10                  ; libero el string anterior
+     call free
+ 
+     mov r10, rax                  ; guardo el nuevo string concatenado en r10
+ 
+ .next:
+     mov r11, [r11]                ; current = current->next, avanzo de nodo
+     jmp .loop
+ 
+ .done:
+     mov rax, r10
+     pop rbp
+     ret
+ 
+ .return_null:
+     xor rax, rax
+     pop rbp
+     ret

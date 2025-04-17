@@ -5,8 +5,6 @@
 #include "ej1.h"
 
 
-#define MAX_RESULT_LEN 1048576  // 1 MB máx
-
 
 /* crea una nueva lista vacía */
 string_proc_list* string_proc_list_create(void){
@@ -51,46 +49,23 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
 }
 
 /* concatena los hashes de los nodos que coinciden con el tipo dado */
-char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
-    if( list == NULL || hash == NULL ) return NULL;
+char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash){
+    if( list == NULL ) return NULL;
 
-    // detección de ciclo
-    string_proc_node* slow = list->first;
-    string_proc_node* fast = list->first;
-    while( fast && fast->next ){
-        slow = slow->next;
-        fast = fast->next->next;
-        if( slow == fast ) return NULL;  // ciclo detectado
-    }
-
-    char* result = strdup(hash);
+    char* result = strdup(hash);  // copiamos el hash inicial
     if( result == NULL ) return NULL;
 
-    size_t current_len = strlen(result);
-
     string_proc_node* current = list->first;
-    while( current != NULL ){
-        if( current->type == type && current->hash != NULL ){
-            size_t add_len = strlen(current->hash);
-            if( current_len + add_len > MAX_RESULT_LEN ){
-                free(result);
-                return NULL;  // overflow
-            }
-
+    while( current != NULL ) {
+        if( current->type == type && current->hash != NULL ) {
             char* new_result = str_concat(result, current->hash);
-            if( new_result == NULL ){
-                free(result);
-                return NULL;
-            }
-
-            free(result);
+            free(result);  // liberamos la anterior
             result = new_result;
-            current_len += add_len;
         }
         current = current->next;
     }
 
-    return result;
+    return result;  // el llamador debe liberar esto
 }
 
 
