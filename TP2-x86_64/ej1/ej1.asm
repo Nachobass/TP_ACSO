@@ -88,7 +88,7 @@ string_proc_node_create_asm:
 
 
 
-string_proc_list_add_node:
+string_proc_list_add_node_asm:
      ; rdi = list, rsi = type, rdx = hash
      push rbp
      mov rbp, rsp
