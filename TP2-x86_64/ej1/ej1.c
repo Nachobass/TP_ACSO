@@ -50,26 +50,51 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
 }
 
 /* concatena los hashes de los nodos que coinciden con el tipo dado */
-char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash){
-    if (list == NULL) return NULL;
+char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+    if( list == NULL || hash == NULL ) return NULL;
 
-    // reemplazo de strdup(hash)
-    size_t len = strlen(hash);
-    char* result = malloc(len + 1);  // +1 para el '\0'
-    if (result == NULL) return NULL;
-    strcpy(result, hash);
+    // detección de ciclo
+    string_proc_node* slow = list->first;
+    string_proc_node* fast = list->first;
+    while( fast && fast->next ){
+        slow = slow->next;
+        fast = fast->next->next;
+        if( slow == fast ) return NULL;  // ciclo detectado
+    }
+
+    // char* result = strdup(hash);
+    size_t hash_len = strlen(hash);
+    char* result = malloc(hash_len + 1);  // +1 para el '\0'
+    if( result == NULL ) return NULL;
+    memcpy(result, hash, hash_len + 1);   // copia incluyendo el '\0'
+
+    if( result == NULL ) return NULL;
+
+    size_t current_len = strlen(result);
 
     string_proc_node* current = list->first;
-    while (current != NULL) {
-        if (current->type == type && current->hash != NULL) {
+    while( current != NULL ){
+        if( current->type == type && current->hash != NULL ){
+            size_t add_len = strlen(current->hash);
+            if( current_len + add_len > MAX_RESULT_LEN ){
+                free(result);
+                return NULL;  // overflow
+            }
+
             char* new_result = str_concat(result, current->hash);
-            free(result);  // liberamos la anterior
+            if( new_result == NULL ){
+                free(result);
+                return NULL;
+            }
+
+            free(result);
             result = new_result;
+            current_len += add_len;
         }
         current = current->next;
     }
 
-    return result;  // el llamador debe liberar esto
+    return result;
 }
 
 
