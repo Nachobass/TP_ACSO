@@ -34,14 +34,16 @@ string_proc_list_create_asm:
     test rax, rax                   ; si malloc falla, rax = NULL
     je .return_null
 
-    mov qword [rax], NULL           ; first, qword es 8 bytes
-    mov qword [rax + 8], NULL       ; last
+    mov qword [rax], 0           ; first, qword es 8 bytes
+    mov qword [rax + 8], 0       ; last
 
+    mov rsp, rbp
     pop rbp
     ret
 
 .return_null:
     xor rax, rax
+    mov rsp, rbp
     pop rbp
     ret
 
