@@ -177,15 +177,26 @@ string_proc_list_concat_asm:
     mov [rbp-16], rax      ; current
 
 .loop_check:
+    ; verificar que fast y fast->next no sean NULL
+    mov rax, [rbp-16]
+    test rax, rax
+    je .init_result
+    mov rax, [rax]
+    test rax, rax
+    je .init_result
+
+    ; slow = slow->next
     mov rax, [rbp-8]
     mov rax, [rax]
     mov [rbp-8], rax
 
+    ; fast = fast->next->next
     mov rax, [rbp-16]
     mov rax, [rax]
     mov rax, [rax]
     mov [rbp-16], rax
 
+    ; comparar slow y fast
     mov rax, [rbp-8]
     cmp rax, [rbp-16]
     jne .loop_check
