@@ -18,6 +18,7 @@ extern free
 extern str_concat
 extern strlen
 extern memcpy
+extern strcpy
 
 
 
