@@ -149,108 +149,140 @@ string_proc_list_add_node_asm:
 
 
 
-section .data
-    MAX_RESULT_LEN equ 1048576  ; 1 MB máximo
-
-section .text
 string_proc_list_concat_asm:
     ; rdi = list, rsi = type, rdx = hash
-    push rbp
-    mov rbp, rsp
-    xor rax, rax
-
-    test rdi, rdi            ; si list == NULL
-    je .return_null
-
-    mov r8, rdi              ; guardo list en r8 antes de pisar rdi
-    mov r9b, sil             ; guardo type → r9b   (r9b:parte baja de r9), (sil:parte baja de rsi)
-
-    ; rdx = hash
-    mov rdi, rdx             ; argumento para strlen(hash)
-    call strlen              ; rax = strlen(hash)
-    mov rcx, rax             ; guardo longitud de hash en rcx
-    inc rcx                  ; +1 para el '\0'
-
-    mov rdi, rcx             ; malloc(strlen + 1)
-    call malloc
-    test rax, rax
-    je .return_null          ; si malloc falla
-
-    mov r10, rax             ; result = malloc(...) → r10
-
-    ; copiar hash a result
-    mov rdi, r10             ; destino
-    mov rsi, rdx             ; fuente (hash)
-    mov rdx, rcx             ; cantidad de bytes (strlen + 1)
-    call memcpy              ; memcpy(result, hash, strlen + 1)
-
-
-    mov r11, [r8]            ; current = list->first, es decir, el primer nodo de la lista
-
-    ; Detección de ciclo
-    mov r12, r11             ; slow = current
-    mov r13, r11             ; fast = current
-
-.loop_cycle_check:
-    test r13, r13            ; fast == NULL?
-    je .no_cycle_detected
-    mov r13, [r13 + 8]       ; fast = fast->next->next
-    test r13, r13
-    je .no_cycle_detected
-    mov r13, [r13 + 8]
-    mov r14, [r12 + 8]       ; slow = slow->next
-    test r12, r12
-    je .no_cycle_detected
-    cmp r12, r13             ; slow == fast?
-    je .return_null          ; ciclo detectado
-
-    mov r12, r14
-    jmp .loop_cycle_check
-
-.no_cycle_detected:
-
-    ; Continuo con la concatenación de cadenas
-    mov r11, [r8]                ; current = list->first
-
-.loop:
-    test r11, r11                ; chequeo si current es NULL
-    je .done
-
-    movzx r12, byte [r11 + 16]  ; current->type
-    cmp r12b, r9b                ; comparo current->type con type buscado
-    jne .next                    ; si no coincide, salto a next
-
-    mov r13, [r11 + 24]          ; current->hash
-    test r13, r13                ; si current->hash == NULL
-    je .next                     ; si es NULL, salto a next
-
-    ; Verificar si concatenar causaría overflow
-    mov rsi, r13                 ; rsi = current->hash
-    call strlen
-    add rax, r10                 ; rax = current_len + add_len
-    cmp rax, MAX_RESULT_LEN      ; si excede el tamaño máximo
-    ja .return_null              ; si excede, retorno NULL
-
-    ; concatenar
-    mov rdi, r10                 ; rdi = string actual (result)
-    mov rsi, r13                 ; rsi = nuevo string a concatenar
-    call str_concat              ; rax = nuevo result
-
-    mov rdi, r10                 ; libero el string anterior
-    call free
-
-    mov r10, rax                 ; guardo el nuevo string concatenado en r10
-
-.next:
-    mov r11, [r11]               ; current = current->next, avanzo de nodo
-    jmp .loop
-
-.done:
-    mov rax, r10
-    pop rbp
-    ret
-
-.return_null:
-    xor rax, rax
-    pop rbp
+    push    rbp
+    mov     rbp, rsp
+    sub     rsp, 96
+    mov     QWORD PTR [rbp-72], rdi
+    mov     eax, esi
+    mov     QWORD PTR [rbp-88], rdx
+    mov     BYTE PTR [rbp-76], al
+    cmp     QWORD PTR [rbp-72], 0
+    je      .L19
+    cmp     QWORD PTR [rbp-88], 0
+    jne     .L20
+.L19:
+    mov     eax, 0
+    jmp     .L21
+.L20:
+    mov     rax, QWORD PTR [rbp-72]
+    mov     rax, QWORD PTR [rax]
+    mov     QWORD PTR [rbp-8], rax
+    mov     rax, QWORD PTR [rbp-72]
+    mov     rax, QWORD PTR [rax]
+    mov     QWORD PTR [rbp-16], rax
+    jmp     .L22
+.L24:
+    mov     rax, QWORD PTR [rbp-8]
+    mov     rax, QWORD PTR [rax]
+    mov     QWORD PTR [rbp-8], rax
+    mov     rax, QWORD PTR [rbp-16]
+    mov     rax, QWORD PTR [rax]
+    mov     rax, QWORD PTR [rax]
+    mov     QWORD PTR [rbp-16], rax
+    mov     rax, QWORD PTR [rbp-8]
+    cmp     rax, QWORD PTR [rbp-16]
+    jne     .L22
+    mov     eax, 0
+    jmp     .L21
+.L22:
+    cmp     QWORD PTR [rbp-16], 0
+    je      .L23
+    mov     rax, QWORD PTR [rbp-16]
+    mov     rax, QWORD PTR [rax]
+    test    rax, rax
+    jne     .L24
+.L23:
+    mov     rax, QWORD PTR [rbp-88]
+    mov     rdi, rax
+    call    strlen
+    mov     QWORD PTR [rbp-48], rax
+    mov     rax, QWORD PTR [rbp-48]
+    add     rax, 1
+    mov     rdi, rax
+    call    malloc
+    mov     QWORD PTR [rbp-24], rax
+    cmp     QWORD PTR [rbp-24], 0
+    jne     .L25
+    mov     eax, 0
+    jmp     .L21
+.L25:
+    mov     rax, QWORD PTR [rbp-48]
+    lea     rdx, [rax+1]
+    mov     rcx, QWORD PTR [rbp-88]
+    mov     rax, QWORD PTR [rbp-24]
+    mov     rsi, rcx
+    mov     rdi, rax
+    call    memcpy
+    cmp     QWORD PTR [rbp-24], 0
+    jne     .L26
+    mov     eax, 0
+    jmp     .L21
+.L26:
+    mov     rax, QWORD PTR [rbp-24]
+    mov     rdi, rax
+    call    strlen
+    mov     QWORD PTR [rbp-32], rax
+    mov     rax, QWORD PTR [rbp-72]
+    mov     rax, QWORD PTR [rax]
+    mov     QWORD PTR [rbp-40], rax
+    jmp     .L27
+.L31:
+    mov     rax, QWORD PTR [rbp-40]
+    movzx   eax, BYTE PTR [rax+16]
+    cmp     BYTE PTR [rbp-76], al
+    jne     .L28
+    mov     rax, QWORD PTR [rbp-40]
+    mov     rax, QWORD PTR [rax+24]
+    test    rax, rax
+    je      .L28
+    mov     rax, QWORD PTR [rbp-40]
+    mov     rax, QWORD PTR [rax+24]
+    mov     rdi, rax
+    call    strlen
+    mov     QWORD PTR [rbp-56], rax
+    mov     rdx, QWORD PTR [rbp-32]
+    mov     rax, QWORD PTR [rbp-56]
+    add     rax, rdx
+    cmp     rax, 1048576
+    jbe     .L29
+    mov     rax, QWORD PTR [rbp-24]
+    mov     rdi, rax
+    call    free
+    mov     eax, 0
+    jmp     .L21
+.L29:
+    mov     rax, QWORD PTR [rbp-40]
+    mov     rdx, QWORD PTR [rax+24]
+    mov     rax, QWORD PTR [rbp-24]
+    mov     rsi, rdx
+    mov     rdi, rax
+    call    str_concat
+    mov     QWORD PTR [rbp-64], rax
+    cmp     QWORD PTR [rbp-64], 0
+    jne     .L30
+    mov     rax, QWORD PTR [rbp-24]
+    mov     rdi, rax
+    call    free
+    mov     eax, 0
+    jmp     .L21
+.L30:
+    mov     rax, QWORD PTR [rbp-24]
+    mov     rdi, rax
+    call    free
+    mov     rax, QWORD PTR [rbp-64]
+    mov     QWORD PTR [rbp-24], rax
+    mov     rax, QWORD PTR [rbp-56]
+    add     QWORD PTR [rbp-32], rax
+.L28:
+    mov     rax, QWORD PTR [rbp-40]
+    mov     rax, QWORD PTR [rax]
+    mov     QWORD PTR [rbp-40], rax
+.L27:
+    cmp     QWORD PTR [rbp-40], 0
+    jne     .L31
+    mov     rax, QWORD PTR [rbp-24]
+.L21:
+    leave
     ret
