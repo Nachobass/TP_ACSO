@@ -116,21 +116,24 @@ string_proc_list_add_node_asm:
 
     ; Lista no vacía:
     mov r12, [r8 + 8]   ; r12 = list->last
-    mov [r12], r10      ; list->last->next = node
-    mov [r10 + 8], r12  ; node->previous = list->last
-    mov [r8 + 8], r10   ; list->last = node
+    mov qword [r12], r10      ; list->last->next = node
+    mov qword [r10 + 8], r12  ; node->previous = list->last
+    mov qword [r8 + 8], r10   ; list->last = node
     jmp .done
 
 .empty_list:
     ; lista vacía: poner first y last al nuevo nodo
-    mov [r8], r10       ; list->first = node
-    mov [r8 + 8], r10   ; list->last = node
+    mov qword [r8], r10       ; list->first = node
+    mov qword [r8 + 8], r10   ; list->last = node
+    jmp .done
 
 .done:
+    mov rsp, rbp
     pop rbp
     ret
 
 .ret:
+    mov rsp, rbp
     pop rbp
     ret
 
