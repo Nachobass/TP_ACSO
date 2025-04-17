@@ -105,6 +105,9 @@ string_proc_list_add_node_asm:
     je .ret
 
     mov r8, rdi             ; list → r8, siendo rdi list->first y r8+8 list->last
+    test r8, r8           
+    je .ret
+    
     mov r9, rax             ; node → r9
 
     ; list->first == NULL ?
