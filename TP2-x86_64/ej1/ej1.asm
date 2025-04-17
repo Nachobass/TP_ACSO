@@ -89,63 +89,61 @@ string_proc_node_create_asm:
 
 
 string_proc_list_add_node_asm:
-     ; rdi = list, rsi = type, rdx = hash
-     push rbp
-     mov rbp, rsp
-     xor rax, rax
- 
-     test rdi, rdi        ; chequeo si list es NULL
-     je .return            ; si es NULL, retorno
+    ; rdi = list, sil = type, rdx = hash
+    push rbp
+    mov rbp, rsp
 
-     test rdx, rdx        ; chequeo si hash es NULL
-     je .return            ; si es NULL, retorno
+    ; Verificar si list == NULL || hash == NULL
+    test rdi, rdi
+    je .return
+    test rdx, rdx
+    je .return
 
-     ; llamar a string_proc_node_create(type, hash)
-     mov rdi, rsi         ; rdi = type
-     mov rsi, rdx         ; rsi = hash
-     call string_proc_node_create_asm
-     test rax, rax        ; chequeo si node es NULL
-     je .return            ; si es NULL, retorno
- 
-     mov r8, rax          ; node = resultado de string_proc_node_create
- 
-     ; Verificar si list->first es NULL
-     mov r9, [rdi]        ; r9 = list->first
-     test r9, r9
-     je .list_empty        ; si list->first es NULL, la lista está vacía
+    ; Guardar registros usados
+    mov r8, rdi       ; r8 = list
+    movzx r9d, sil    ; r9d = (uint8_t)type
 
-     ; Verificar si list->last es NULL (caso de lista mal construida)
-     mov r10, [rdi + 8]   ; r10 = list->last
-     test r10, r10
-     je .list_corrupted    ; si list->last es NULL, la lista está corrupta
+    ; Crear nodo: string_proc_node_create(type, hash)
+    movzx edi, sil    ; 1er parámetro: type → edi
+    mov rsi, rdx      ; 2do parámetro: hash → rsi
+    call string_proc_node_create_asm
+    test rax, rax
+    je .return        ; si node == NULL, salgo
 
-     ; Lista no vacía: list->last->next = node, node->previous = list->last, list->last = node
-     mov r11, [r10]       ; r11 = list->last->next
-     mov [r10], r8        ; list->last->next = node
-     mov [r8 + 8], r10    ; node->previous = list->last
-     mov [rdi + 8], r8    ; list->last = node
-     jmp .done
+    ; rax = node
+    mov r10, rax      ; r10 = node
 
- .list_empty:
-     ; La lista está vacía: list->first = node, list->last = node
-     mov [rdi], r8        ; list->first = node
-     mov [rdi + 8], r8    ; list->last = node
-     jmp .done
+    ; if (list->first == NULL)
+    mov r11, [r8]     ; r11 = list->first
+    test r11, r11
+    je .empty_list
 
- .list_corrupted:
-     ; Lista corrupta: liberar node
-     mov rdi, r8          ; rdi = node
-     call free
-     jmp .done
+    ; else: lista no vacía
+    ; list->last->next = node
+    mov r12, [r8 + 8]     ; r12 = list->last
+    mov [r12], r10        ; r12->next = node
 
- .return:
-     xor rax, rax         ; retorno NULL
-     pop rbp
-     ret
+    ; node->previous = list->last
+    mov [r10 + 8], r12    ; node->previous = list->last
 
- .done:
-     pop rbp
-     ret
+    ; list->last = node
+    mov [r8 + 8], r10     ; list->last = node
+    jmp .done
+
+.empty_list:
+    ; list->first = node
+    mov [r8], r10
+    ; list->last = node
+    mov [r8 + 8], r10
+
+.done:
+    pop rbp
+    ret
+
+.return:
+    pop rbp
+    ret
+
 
 
 
