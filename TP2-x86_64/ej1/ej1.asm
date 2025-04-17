@@ -100,7 +100,8 @@ string_proc_list_add_node_asm:
     ; Guardar valores en registros temporales
     mov r8, rdi         ; r8 = list (usaremos este para operar con la lista)
     mov r9, rdx         ; r9 = hash
-    movzx rdi, sil      ; edi = (uint32_t) type (1er arg para la función create)
+    xor rdi, rdi        ; limpiar rdi
+    mov dil, sil        ; poner type en dil
     mov rsi, r9         ; rsi = hash (2do arg para la función create)
 
     ; Llamar a string_proc_node_create(type, hash)
