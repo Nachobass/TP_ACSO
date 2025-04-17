@@ -57,8 +57,9 @@ string_proc_node_create_asm:
     je .return_null
 
     ; guardar argumentos
+    movzx rcx, dil              ; type → rcx    guardo la parte baja de rdi en rcx y lleno con ceros el resto
 
-    mov rdi, 32
+    mov edi, 32
     call malloc
     test rax, rax
     je .return_null
