@@ -177,7 +177,7 @@ string_proc_list_concat_asm:
      test r12, r12        ; chequeo si current es NULL
      je .done
  
-     movzx r13b, byte [r12 + 16]   ; current->type
+     movzx r13, byte [r12 + 16]   ; current->type
      cmp r13b, r9b                 ; comparo current->type con type buscado
      jne .next                     ; si no coincide, salto a next
  
