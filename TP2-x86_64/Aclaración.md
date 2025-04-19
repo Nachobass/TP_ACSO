@@ -1,0 +1,1 @@
+Entrego las carpetas bomb y ej1 de esta forma debido a que, colocándolas dentro de src, los archivos dejaban de correr. Se lo consulté a Santiago y me dijo que no pasaba nada si las entregaba así. Mi bomba es la número 12.
