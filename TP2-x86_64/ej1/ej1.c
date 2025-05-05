@@ -1,16 +1,97 @@
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include "ej1.h"
 
+#define MAX_RESULT_LEN 1048576  // 1 MB máx
+
+
+/* crea una nueva lista vacía */
 string_proc_list* string_proc_list_create(void){
+    string_proc_list* list = malloc(sizeof(string_proc_list));
+    if( list == NULL ) return NULL;
+    list->first = NULL;
+    list->last = NULL;
+    return list;
 }
 
+/* crea un nuevo nodo apuntando al hash pasado */
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+    if( hash == NULL ) return NULL;
+    string_proc_node* node = malloc(sizeof(string_proc_node));
+    if( node == NULL ) return NULL;
+    node->type = type;
+    node->hash = hash;
+    node->next = NULL;
+    node->previous = NULL;
+    return node;
 }
 
+/* agrega un nodo al final de la lista */
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
+    if( list == NULL || hash == NULL ) return;
+
+    string_proc_node* node = string_proc_node_create(type, hash);
+    if( node == NULL ) return;
+
+    if( list->first == NULL ) {                     // si la lista está vacía
+        list->first = node;
+        list->last = node;
+    } else {                                        // lista no vacía
+        list->last->next = node;
+        node->previous = list->last;
+        list->last = node;
+    }
 }
 
-char* string_proc_list_concat(string_proc_list* list, uint8_t type , char* hash){
+/* concatena los hashes de los nodos que coinciden con el tipo dado */
+char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+    if( list == NULL || hash == NULL ) return NULL;
+
+    // detección de ciclo
+    string_proc_node* slow = list->first;
+    string_proc_node* fast = list->first;
+    while( fast && fast->next ){
+        slow = slow->next;
+        fast = fast->next->next;
+        if( slow == fast ) return NULL;  // ciclo detectado
+    }
+
+    size_t hash_len = strlen(hash);
+    char* result = malloc(hash_len + 1);  // +1 para el '\0'
+    if( result == NULL ) return NULL;
+    memcpy(result, hash, hash_len + 1);   // copia incluyendo el '\0'
+
+    if( result == NULL ) return NULL;
+
+    size_t current_len = strlen(result);
+
+    string_proc_node* current = list->first;
+    while( current != NULL ){
+        if( current->type == type && current->hash != NULL ){
+            size_t add_len = strlen(current->hash);
+            if( current_len + add_len > MAX_RESULT_LEN ){
+                free(result);
+                return NULL;  // overflow
+            }
+
+            char* new_result = str_concat(result, current->hash);
+            if( new_result == NULL ){
+                free(result);
+                return NULL;
+            }
+
+            free(result);
+            result = new_result;
+            current_len += add_len;
+        }
+        current = current->next;
+    }
+
+    return result;
 }
+
+
 
 
 /** AUX FUNCTIONS **/
@@ -63,4 +144,3 @@ void string_proc_list_print(string_proc_list* list, FILE* file){
                 current_node = current_node->next;
         }
 }
-
