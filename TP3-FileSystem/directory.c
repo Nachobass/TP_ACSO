@@ -8,6 +8,7 @@
 #include <string.h>
 #include <assert.h>
 
+
 /**
  * TODO
  */
@@ -19,15 +20,15 @@ int directory_findname(struct unixfilesystem *fs, const char *name, int dirinumb
 
   while( 1 ){
     int bytes = file_getblock(fs, dirinumber, blockNum, block);
-    if (bytes < 0) return -1; // Error al leer bloque
-    if (bytes == 0) break;  // Fin del archivo
+    if (bytes < 0) return -1; // Error reading the block
+    if (bytes == 0) break;  // End of file
 
     int numEntries = bytes / sizeof(struct direntv6);
     struct direntv6 *entry = (struct direntv6 *)block;
 
     for( int i = 0; i < numEntries; i++ ){
       if( strncmp(entry[i].d_name, name, sizeof(entry[i].d_name)) == 0 ){
-        *dirEnt = entry[i];  // Copiar la entrada encontrada
+        *dirEnt = entry[i];  // Copy of the found entry
         return 0;
       }
     }
@@ -35,5 +36,5 @@ int directory_findname(struct unixfilesystem *fs, const char *name, int dirinumb
     blockNum++;
   }
 
-  return -1;  // No se encontró el nombre
+  return -1;
 }

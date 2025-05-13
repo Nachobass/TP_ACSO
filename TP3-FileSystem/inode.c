@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h> // para memcpy
+#include <string.h> // memcpy
 #include "inode.h"
 #include "diskimg.h"
 #include "unixfilesystem.h"
@@ -12,7 +12,7 @@
  * TODO
  */
 int inode_iget(struct unixfilesystem *fs, int inumber, struct inode *inp) {
-    if (!fs || !inp || inumber < 1) {
+    if( !fs || !inp || inumber < 1 ){
         return -1;
     }
     
@@ -25,41 +25,17 @@ int inode_iget(struct unixfilesystem *fs, int inumber, struct inode *inp) {
     struct inode block[INODES_PER_BLOCK];
 
     if( diskimg_readsector(fs->dfd, block_num, block) == -1 ){
-        return -1; // error leyendo del disco
+        return -1; // error reading the sector
     }
 
     memcpy( inp, &block[offset_in_block], sizeof(struct inode) );
     return 0;
 }
 
+
 /**
  * TODO
  */
-// int inode_indexlookup(struct unixfilesystem *fs, struct inode *inp, int blockNum) {  
-//     if (!fs || !inp || blockNum < 0) return -1;
-
-//     if( (inp->i_mode & ILARG) == 0 ){
-//         // Modo normal: direcciones directas (archivo chico)
-//         if( blockNum >= 8 ) return -1;
-//             return inp->i_addr[blockNum];
-//         }
-    
-//         // Modo ILARG: direcciones indirectas
-//         if( blockNum >= 8 * 256 ) return -1;
-    
-//         int indir_block = blockNum / 256;
-//         int indir_offset = blockNum % 256;
-    
-//         uint16_t block[256]; // buffer para leer bloque indirecto
-    
-//         int sector = inp->i_addr[indir_block];
-//         if( sector == 0 ) return -1; // bloque no asignado
-    
-//         if( diskimg_readsector(fs->dfd, sector, block) == -1 ) return -1;
-    
-//         return block[indir_offset];
-// }
-
 int inode_indexlookup(struct unixfilesystem *fs, struct inode *inp, int blockNum) {
     if( !fs || !inp || blockNum < 0 ) return -1;
 
@@ -81,7 +57,7 @@ int inode_indexlookup(struct unixfilesystem *fs, struct inode *inp, int blockNum
         return block[indir_offset];
     }
 
-    // Double indirect (último puntero, i_addr[7])
+    // Double indirect (last pointer, i_addr[7])
     blockNum -= 7 * 256;
     if( blockNum >= 256 * 256 ) return -1;
 
@@ -102,13 +78,7 @@ int inode_indexlookup(struct unixfilesystem *fs, struct inode *inp, int blockNum
 }
 
 
-// int inode_getsize(struct inode *inp) {
-//   return ((inp->i_size0 << 16) | inp->i_size1); 
-// }
 int inode_getsize(struct inode *inp) {
     if( !inp ) return -1;
     return ((inp->i_size0 << 16) | inp->i_size1); 
 }
-
-
-
