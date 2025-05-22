@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 
             int val;
             read(pipes[(i + n - 1) % n][0], &val, sizeof(int));
-            printf("Proceso %d recibió %d\n", i + 1, val);
+            printf("Proceso %d recibió %d\n", i, val);
             val++;
             write(pipes[i][1], &val, sizeof(int));
 
