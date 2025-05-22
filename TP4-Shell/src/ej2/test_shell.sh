@@ -22,22 +22,30 @@ function run_test() {
     fi
 }
 
-# PREPARACIÓN DEL ENTORNO
+# === PREPARAR ENTORNO DE PRUEBA ===
 mkdir -p test_dir
 cd test_dir
-touch archivo1.zip imagen.png documento.pdf texto.txt
+
+# Crear archivos necesarios
+touch archivo1.zip
+touch imagen.png
+touch documento.pdf
+touch texto.txt
+echo "contenido de prueba" > archivo1.txt
+echo "uno.zip dos.png" > mixto.txt
 
 # === TESTS ===
 run_test "ls | grep .zip\nq" "archivo1.zip"
 run_test "ls | grep .png\nq" "imagen.png"
+run_test "ls | grep .pdf\nq" "documento.pdf"
 run_test "echo hola mundo | tr a-z A-Z\nq" "HOLA MUNDO"
-run_test "ls | grep \".png .zip\"\nq" ""  # Debe fallar porque no hay esa secuencia exacta
-run_test "ls | grep \".pdf\"\nq" "documento.pdf"
-run_test "cat texto.txt | wc -l\nq" "0"  # archivo vacío
-run_test "echo 'hola mundo' | tr 'a-z' 'A-Z'\nq" "HOLA MUNDO"
+run_test "cat texto.txt | wc -l\nq" "0"
+run_test "cat archivo1.txt | grep prueba\nq" "contenido de prueba"
+run_test "echo hola | tr a-z A-Z | tr O A\nq" "HALA"
+run_test "ls | grep \".png .zip\"\nq" ""  # No existe esa secuencia exacta
 run_test "invalidcmd\nq" "execvp"
 
-# === RESULTADO ===
+# === RESULTADO FINAL ===
 cd ..
 rm -rf test_dir
 rm -f $TMP_OUT
