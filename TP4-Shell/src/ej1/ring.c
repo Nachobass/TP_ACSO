@@ -157,6 +157,8 @@ int main(int argc, char **argv) {
 
     // Espera mensaje final desde el último pipe del anillo
     read(pipes[(start + n - 1) % n][0], buffer, sizeof(int));
+    printf("Proceso 0 recibió %d\n", buffer[0]);
+    buffer[0]++;  // El proceso padre también incrementa el valor
     printf("Mensaje final después de completar el anillo: %d\n", buffer[0]);
 
     // Espera que terminen todos los hijos
