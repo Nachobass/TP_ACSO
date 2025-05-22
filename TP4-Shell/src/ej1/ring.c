@@ -1,8 +1,8 @@
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
+// #include <sys/types.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <unistd.h>
+// #include <sys/wait.h>
 
 
 // int main(int argc, char **argv)
@@ -93,6 +93,79 @@
 
 
 
+// #include <sys/types.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <unistd.h>
+// #include <sys/wait.h>
+
+// int main(int argc, char **argv) {
+//     int start, status, pid, n;
+//     int buffer[1];
+
+//     if (argc != 4) {
+//         printf("Uso: anillo <n> <c> <s> \n");
+//         exit(0);
+//     }
+
+//     // Parseo de argumentos
+//     n = atoi(argv[1]);         // cantidad de procesos
+//     buffer[0] = atoi(argv[2]); // mensaje inicial
+//     start = atoi(argv[3]);     // proceso que inicia
+
+//     printf("Se crearán %i procesos, se enviará el caracter %i desde proceso %i \n", n, buffer[0], start);
+
+//     // Crear n pipes para el anillo
+//     int pipes[n][2];
+//     for (int i = 0; i < n; i++) {
+//         if (pipe(pipes[i]) < 0) {
+//             perror("pipe");
+//             exit(1);
+//         }
+//     }
+
+//     // Crear procesos hijos
+//     for (int i = 0; i < n; i++) {
+//         if ((pid = fork()) == 0) {
+//             // Cada hijo cierra todos los pipes excepto el suyo
+//             for (int j = 0; j < n; j++) {
+//                 if (j != (i + n - 1) % n)
+//                     close(pipes[j][0]); // leer de anterior
+//                 if (j != i)
+//                     close(pipes[j][1]); // escribir al siguiente
+//             }
+
+//             int val;
+//             read(pipes[(i + n - 1) % n][0], &val, sizeof(int));
+//             printf("Proceso %d recibió %d\n", i, val);
+//             val++;
+//             write(pipes[i][1], &val, sizeof(int));
+
+//             exit(0);
+//         }
+//     }
+
+//     // Proceso padre
+//     // Cierra todos los pipes excepto los que usa para enviar y recibir
+//     for (int i = 0; i < n; i++) {
+//         if (i != start) close(pipes[i][1]); // solo escribe en start
+//         if (i != (start + n - 1) % n) close(pipes[i][0]); // solo lee desde el anterior a start
+//     }
+
+//     // Envía mensaje inicial al pipe de entrada del proceso start
+//     write(pipes[start][1], buffer, sizeof(int));
+
+//     // Espera mensaje final desde el último pipe del anillo
+//     read(pipes[(start + n - 1) % n][0], buffer, sizeof(int));
+//     printf("Mensaje final después de completar el anillo: %d\n", buffer[0]);
+
+//     // Espera que terminen todos los hijos
+//     while (wait(&status) > 0);
+
+//     return 0;
+// }
+
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,7 +173,7 @@
 #include <sys/wait.h>
 
 int main(int argc, char **argv) {
-    int start, status, pid, n;
+    int n, start, status;
     int buffer[1];
 
     if (argc != 4) {
@@ -108,14 +181,14 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
-    // Parseo de argumentos
-    n = atoi(argv[1]);         // cantidad de procesos
-    buffer[0] = atoi(argv[2]); // mensaje inicial
-    start = atoi(argv[3]);     // proceso que inicia
+    // Parsear argumentos
+    n = atoi(argv[1]);
+    buffer[0] = atoi(argv[2]);
+    start = atoi(argv[3]);
 
     printf("Se crearán %i procesos, se enviará el caracter %i desde proceso %i \n", n, buffer[0], start);
 
-    // Crear n pipes para el anillo
+    // Crear pipes para el anillo
     int pipes[n][2];
     for (int i = 0; i < n; i++) {
         if (pipe(pipes[i]) < 0) {
@@ -124,42 +197,54 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Pipe adicional para recibir el resultado final en el padre
+    int final_pipe[2];
+    if (pipe(final_pipe) < 0) {
+        perror("pipe final");
+        exit(1);
+    }
+
     // Crear procesos hijos
     for (int i = 0; i < n; i++) {
-        if ((pid = fork()) == 0) {
-            // Cada hijo cierra todos los pipes excepto el suyo
+        if (fork() == 0) {
+            // Cerrar todos los pipes excepto el de entrada y salida correspondiente
             for (int j = 0; j < n; j++) {
-                if (j != (i + n - 1) % n)
-                    close(pipes[j][0]); // leer de anterior
-                if (j != i)
-                    close(pipes[j][1]); // escribir al siguiente
+                if (j != (i + n - 1) % n) close(pipes[j][0]); // solo usar entrada
+                if (j != i) close(pipes[j][1]); // solo usar salida
             }
+            close(final_pipe[0]); // el hijo no lee del pipe final
 
             int val;
             read(pipes[(i + n - 1) % n][0], &val, sizeof(int));
             printf("Proceso %d recibió %d\n", i, val);
             val++;
-            write(pipes[i][1], &val, sizeof(int));
+
+            // Si este proceso es el último en el anillo antes del padre
+            if ((i + 1) % n == start) {
+                write(final_pipe[1], &val, sizeof(int)); // escribe al padre
+            } else {
+                write(pipes[i][1], &val, sizeof(int)); // continúa el anillo
+            }
 
             exit(0);
         }
     }
 
     // Proceso padre
-    // Cierra todos los pipes excepto los que usa para enviar y recibir
     for (int i = 0; i < n; i++) {
-        if (i != start) close(pipes[i][1]); // solo escribe en start
-        if (i != (start + n - 1) % n) close(pipes[i][0]); // solo lee desde el anterior a start
+        close(pipes[i][0]);
+        close(pipes[i][1]);
     }
+    close(final_pipe[1]); // no escribe, solo lee
 
-    // Envía mensaje inicial al pipe de entrada del proceso start
+    // Enviar mensaje inicial
     write(pipes[start][1], buffer, sizeof(int));
 
-    // Espera mensaje final desde el último pipe del anillo
-    read(pipes[(start + n - 1) % n][0], buffer, sizeof(int));
+    // Leer resultado final
+    read(final_pipe[0], buffer, sizeof(int));
     printf("Mensaje final después de completar el anillo: %d\n", buffer[0]);
 
-    // Espera que terminen todos los hijos
+    // Esperar hijos
     while (wait(&status) > 0);
 
     return 0;
