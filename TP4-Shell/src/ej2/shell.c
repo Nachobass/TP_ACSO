@@ -47,19 +47,152 @@
 // }
 
 
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <unistd.h>
+// #include <sys/wait.h>
+// #include <string.h>
+
+// #define MAX_COMMANDS 200
+
+// void ejecutar_comandos_con_pipes(char *commands[], int count) {
+//     int pipes[MAX_COMMANDS - 1][2];
+//     pid_t pids[MAX_COMMANDS];
+
+//     // Crear todos los pipes necesarios
+//     for (int i = 0; i < count - 1; i++) {
+//         if (pipe(pipes[i]) == -1) {
+//             perror("pipe");
+//             exit(EXIT_FAILURE);
+//         }
+//     }
+
+//     for (int i = 0; i < count; i++) {
+//         pids[i] = fork();
+
+//         if (pids[i] == 0) { // Proceso hijo
+//             // Redirigir entrada si no es el primer comando
+//             if (i > 0) {
+//                 dup2(pipes[i - 1][0], STDIN_FILENO);
+//             }
+//             // Redirigir salida si no es el último comando
+//             if (i < count - 1) {
+//                 dup2(pipes[i][1], STDOUT_FILENO);
+//             }
+
+//             // Cerrar todos los pipes en el hijo
+//             for (int j = 0; j < count - 1; j++) {
+//                 close(pipes[j][0]);
+//                 close(pipes[j][1]);
+//             }
+
+//             // Separar comando y argumentos
+//             char *args[64];
+//             char *token = strtok(commands[i], " ");
+//             int arg_count = 0;
+//             while (token != NULL) {
+//                 args[arg_count++] = token;
+//                 token = strtok(NULL, " ");
+//             }
+//             args[arg_count] = NULL;
+
+//             // Ejecutar comando
+//             if (execvp(args[0], args) == -1) {
+//                 perror("execvp");
+//                 exit(EXIT_FAILURE);
+//             }
+//         }
+//     }
+
+//     // Cerrar todos los pipes en el padre
+//     for (int i = 0; i < count - 1; i++) {
+//         close(pipes[i][0]);
+//         close(pipes[i][1]);
+//     }
+
+//     // Esperar a todos los hijos
+//     for (int i = 0; i < count; i++) {
+//         waitpid(pids[i], NULL, 0);
+//     }
+// }
+
+// int main() {
+//     char command[256];
+//     char *commands[MAX_COMMANDS];
+//     int command_count;
+
+//     while (1) {
+//         printf("Shell> ");
+//         fflush(stdout);
+
+//         if (fgets(command, sizeof(command), stdin) == NULL) {
+//             printf("\n");
+//             break;
+//         }
+
+//         command[strcspn(command, "\n")] = '\0';
+
+//         // Salir si el usuario escribe 'exit'
+//         if (strcmp(command, "exit") == 0)
+//             break;
+
+//         // Tokenizar por pipes
+//         command_count = 0;
+//         char *token = strtok(command, "|");
+//         while (token != NULL && command_count < MAX_COMMANDS) {
+//             commands[command_count++] = token;
+//             token = strtok(NULL, "|");
+//         }
+
+//         // Ejecutar comandos con pipe
+//         ejecutar_comandos_con_pipes(commands, command_count);
+//     }
+
+//     return 0;
+// }
+
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX_COMMANDS 200
+
+// === NUEVO: parser que respeta comillas ===
+void parse_args_con_comillas(char *input, char *args[]) {
+    int i = 0;
+    while (*input) {
+        while (isspace(*input)) input++;  // saltar espacios
+
+        if (*input == '\0') break;
+
+        if (*input == '"') {
+            input++;
+            args[i++] = input;
+            while (*input && *input != '"') input++;
+        } else {
+            args[i++] = input;
+            while (*input && !isspace(*input)) input++;
+        }
+
+        if (*input) {
+            *input = '\0';
+            input++;
+        }
+    }
+    args[i] = NULL;
+}
+// ==========================================
 
 void ejecutar_comandos_con_pipes(char *commands[], int count) {
     int pipes[MAX_COMMANDS - 1][2];
     pid_t pids[MAX_COMMANDS];
 
-    // Crear todos los pipes necesarios
     for (int i = 0; i < count - 1; i++) {
         if (pipe(pipes[i]) == -1) {
             perror("pipe");
@@ -69,34 +202,18 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
 
     for (int i = 0; i < count; i++) {
         pids[i] = fork();
+        if (pids[i] == 0) { // hijo
+            if (i > 0) dup2(pipes[i - 1][0], STDIN_FILENO);
+            if (i < count - 1) dup2(pipes[i][1], STDOUT_FILENO);
 
-        if (pids[i] == 0) { // Proceso hijo
-            // Redirigir entrada si no es el primer comando
-            if (i > 0) {
-                dup2(pipes[i - 1][0], STDIN_FILENO);
-            }
-            // Redirigir salida si no es el último comando
-            if (i < count - 1) {
-                dup2(pipes[i][1], STDOUT_FILENO);
-            }
-
-            // Cerrar todos los pipes en el hijo
             for (int j = 0; j < count - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
             }
 
-            // Separar comando y argumentos
             char *args[64];
-            char *token = strtok(commands[i], " ");
-            int arg_count = 0;
-            while (token != NULL) {
-                args[arg_count++] = token;
-                token = strtok(NULL, " ");
-            }
-            args[arg_count] = NULL;
+            parse_args_con_comillas(commands[i], args);  // 🚀 usar parser que respeta comillas
 
-            // Ejecutar comando
             if (execvp(args[0], args) == -1) {
                 perror("execvp");
                 exit(EXIT_FAILURE);
@@ -104,13 +221,11 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
         }
     }
 
-    // Cerrar todos los pipes en el padre
     for (int i = 0; i < count - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
     }
 
-    // Esperar a todos los hijos
     for (int i = 0; i < count; i++) {
         waitpid(pids[i], NULL, 0);
     }
@@ -132,11 +247,9 @@ int main() {
 
         command[strcspn(command, "\n")] = '\0';
 
-        // Salir si el usuario escribe 'exit'
-        if (strcmp(command, "exit") == 0)
+        if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
             break;
 
-        // Tokenizar por pipes
         command_count = 0;
         char *token = strtok(command, "|");
         while (token != NULL && command_count < MAX_COMMANDS) {
@@ -144,7 +257,6 @@ int main() {
             token = strtok(NULL, "|");
         }
 
-        // Ejecutar comandos con pipe
         ejecutar_comandos_con_pipes(commands, command_count);
     }
 
