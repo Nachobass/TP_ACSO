@@ -165,6 +165,7 @@
 //     return 0;
 // }
 
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -172,38 +173,63 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
+    int start, c, n;
+    int buffer[1];
+
     if (argc != 4) {
-        fprintf(stderr, "Uso: %s <n> <c> <s>\n", argv[0]);
+        printf("Uso: anillo <n> <c> <s> \n");
         exit(EXIT_FAILURE);
     }
 
-    int n = atoi(argv[1]);     // cantidad de procesos
-    int c = atoi(argv[2]);     // valor inicial
-    int s = atoi(argv[3]);     // índice de inicio
-    int pipes[n][2];
+    n = atoi(argv[1]);      // cantidad de procesos hijos
+    buffer[0] = atoi(argv[2]); // valor inicial
+    start = atoi(argv[3]);  // proceso que inicia
 
-    for (int i = 0; i < n; i++)
-        pipe(pipes[i]);  // crear todos los pipes del anillo
+    printf("Se crearán %i procesos, se enviará el caracter %i desde proceso %i \n", n, buffer[0], start);
 
-    for (int i = 0; i < n; i++) {
-        if (fork() == 0) {
-            int val;
-            read(pipes[i][0], &val, sizeof(int));   // leer del pipe anterior
-            val++;
-            write(pipes[(i + 1) % n][1], &val, sizeof(int));  // escribir al siguiente
-            exit(0);  // hijo termina
+    int pipes[n+1][2]; // pipes[n] conecta el último hijo con el padre
+
+    for (int i = 0; i <= n; i++) {
+        if (pipe(pipes[i]) == -1) {
+            perror("pipe");
+            exit(EXIT_FAILURE);
         }
     }
 
-    // El padre inicia la comunicación
-    write(pipes[s][1], &c, sizeof(int));  // escribe en el pipe del proceso s
+    for (int i = 0; i < n; i++) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Cierre de extremos no usados
+            for (int j = 0; j <= n; j++) {
+                if (j != i) close(pipes[j][0]); // cerrar lectura no propia
+                if (j != i+1) close(pipes[j][1]); // cerrar escritura no al siguiente
+            }
 
-    int result;
-    read(pipes[s][0], &result, sizeof(int));  // lee el resultado final desde el mismo pipe
-    printf("Resultado final recibido en el padre: %d\n", result);
+            int val;
+            read(pipes[i][0], &val, sizeof(int));
+            printf("Proceso %d recibió: %d\n", i, val);
+            val++;
+            write(pipes[i+1][1], &val, sizeof(int));
+            exit(0);
+        }
+    }
 
+    // PADRE
+
+    // Cierra extremos que no usa
+    for (int i = 0; i <= n; i++) {
+        if (i != start) close(pipes[i][1]); // no escribe en otros pipes
+        if (i != n) close(pipes[i][0]);     // no lee de otros pipes (excepto el último)
+    }
+
+    write(pipes[start][1], buffer, sizeof(int)); // escribe valor inicial
+    int final;
+    read(pipes[n][0], &final, sizeof(int));      // lee desde el último pipe
+    printf("Resultado final recibido en el padre: %d\n", final);
+
+    // Espera a los hijos
     for (int i = 0; i < n; i++)
-        wait(NULL);  // espera a que terminen todos los hijos
+        wait(NULL);
 
     return 0;
 }
