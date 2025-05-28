@@ -19,7 +19,8 @@ run_test() {
     echo -e "\n🔸 Test: $label"
     ./ring "$n" "$c" "$s" > "$TEMP_OUT"
 
-    if grep -q "Resultado final: $expected" "$TEMP_OUT"; then
+    if grep -q "Resultado final recibido en el padre: $expected" "$TEMP_OUT"; then
+
         echo "✅ OK - Resultado esperado: $expected"
     else
         echo "❌ ERROR - Se esperaba: $expected"
