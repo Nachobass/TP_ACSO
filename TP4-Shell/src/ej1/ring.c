@@ -100,32 +100,32 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    int ultimo = (start - 1 + n) % n;
+
     for (int i = 0; i < n; i++) {
         pid = fork();
         if (pid == 0) {
-            // Cierre de extremos no usados
+            // Cerrar pipes no usados
             for (int j = 0; j < n; j++) {
-                if (j != i) close(pipes[j][0]); // solo leer de pipe[i]
-                if (j != (i + 1) % n) close(pipes[j][1]); // solo escribir al siguiente
+                if (j != i) close(pipes[j][0]); // leer solo de pipe[i]
+                if (j != (i + 1) % n) close(pipes[j][1]); // escribir solo a siguiente
             }
-            close(pipe_padre[0]); // solo el último escribe al padre
-            if ((i + 1) % n == start) {
-                // Este es el último proceso del anillo: escribe al padre
-                int val;
-                read(pipes[i][0], &val, sizeof(int));
-                printf("Proceso %d recibió: %d\n", i, val);
-                val++;
+            close(pipe_padre[0]); // padre solo lee
+
+            int val;
+            read(pipes[i][0], &val, sizeof(int));
+            printf("Proceso %d recibió: %d\n", i, val);
+            val++;
+
+            if (i == ultimo) {
                 write(pipe_padre[1], &val, sizeof(int));
             } else {
-                int val;
-                read(pipes[i][0], &val, sizeof(int));
-                printf("Proceso %d recibió: %d\n", i, val);
-                val++;
                 write(pipes[(i + 1) % n][1], &val, sizeof(int));
             }
             exit(0);
         }
     }
+
 
     // Proceso padre
     for (int i = 0; i < n; i++) {
