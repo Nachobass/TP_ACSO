@@ -43,7 +43,7 @@ run_test "cat texto.txt | wc -l" "0"
 run_test "cat archivo1.txt | grep prueba" "contenido de prueba"
 run_test "echo hola | tr a-z A-Z | tr O A" "HALA"
 run_test "ls | grep \".png .zip\"" ""  # No existe esa secuencia exacta
-run_test "invalidcmd" "execvp"
+run_test "invalidcmd" "execvp: No such file or directory"
 
 # === RESULTADO FINAL ===
 cd ..
