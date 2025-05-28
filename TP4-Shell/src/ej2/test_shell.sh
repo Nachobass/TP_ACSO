@@ -35,15 +35,15 @@ echo "contenido de prueba" > archivo1.txt
 echo "uno.zip dos.png" > mixto.txt
 
 # === TESTS ===
-run_test "ls | grep .zip\nq" "archivo1.zip"
-run_test "ls | grep .png\nq" "imagen.png"
-run_test "ls | grep .pdf\nq" "documento.pdf"
-run_test "echo hola mundo | tr a-z A-Z\nq" "HOLA MUNDO"
-run_test "cat texto.txt | wc -l\nq" "0"
-run_test "cat archivo1.txt | grep prueba\nq" "contenido de prueba"
-run_test "echo hola | tr a-z A-Z | tr O A\nq" "HALA"
-run_test "ls | grep \".png .zip\"\nq" ""  # No existe esa secuencia exacta
-run_test "invalidcmd\nq" "execvp"
+run_test "ls | grep .zip" "archivo1.zip"
+run_test "ls | grep .png" "imagen.png"
+run_test "ls | grep .pdf" "documento.pdf"
+run_test "echo hola mundo | tr a-z A-Z" "HOLA MUNDO"
+run_test "cat texto.txt | wc -l" "0"
+run_test "cat archivo1.txt | grep prueba" "contenido de prueba"
+run_test "echo hola | tr a-z A-Z | tr O A" "HALA"
+run_test "ls | grep \".png .zip\"" ""  # No existe esa secuencia exacta
+run_test "invalidcmd" "execvp"
 
 # === RESULTADO FINAL ===
 cd ..
