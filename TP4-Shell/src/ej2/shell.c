@@ -257,6 +257,20 @@ int main() {
             token = strtok(NULL, "|");
         }
 
+        if (strncmp(command, "cd", 2) == 0) {
+            char *path = command + 2;
+            while (isspace(*path)) path++;
+
+            if (*path == '\0') {
+                path = getenv("HOME");
+            }
+
+            if (chdir(path) != 0) {
+                perror("cd");
+            }
+            continue;
+        }
+
         ejecutar_comandos_con_pipes(commands, command_count);
     }
 
