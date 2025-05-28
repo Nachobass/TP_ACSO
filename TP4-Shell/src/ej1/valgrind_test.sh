@@ -30,7 +30,7 @@ run_valgrind_test() {
         return
     fi
 
-    if grep -q "Resultado final: $expected" "$TEMP_OUT"; then
+    if grep -q "Resultado final recibido en el padre: $expected" "$TEMP_OUT"; then
         echo "✅ OK - Resultado esperado: $expected"
     else
         echo "❌ ERROR - Se esperaba: $expected"
