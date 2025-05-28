@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SHELL_EXEC=shell
+SHELL_EXEC=./shell
 TMP_OUT=output.txt
 PASS_COUNT=0
 FAIL_COUNT=0
