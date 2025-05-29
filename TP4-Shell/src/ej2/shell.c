@@ -167,7 +167,7 @@ int main() {
 
         command[strcspn(command, "\n")] = '\0';
 
-        // Chequeos de sintaxis simples antes de tokenizar
+        // Chequeo sintaxis simple
         if (command[0] == '|' || command[strlen(command) - 1] == '|') {
             fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
             continue;
@@ -177,14 +177,35 @@ int main() {
             continue;
         }
 
+        // Copia para validaciones antes de modificar command original
+        char command_copia[256];
+        strncpy(command_copia, command, sizeof(command_copia));
+
+        // Validar 'exit' dentro de pipelines
+        int count_temp = 0;
+        char *token_temp = strtok(command_copia, "|");
+        while (token_temp && count_temp < MAX_COMMANDS) {
+            while (isspace(*token_temp)) token_temp++;
+            if (strncmp(token_temp, "exit", 4) == 0 &&
+                (token_temp[4] == '\0' || isspace(token_temp[4]))) {
+                if (count_temp > 0) {
+                    fprintf(stderr, "Error: 'exit' no puede estar en un pipeline\n");
+                    goto loop_continue;
+                }
+            }
+            count_temp++;
+            token_temp = strtok(NULL, "|");
+        }
+
+        // Tokenizar comandos reales
         command_count = 0;
         char *token = strtok(command, "|");
-        while (token != NULL && command_count < MAX_COMMANDS) {
+        while (token && command_count < MAX_COMMANDS) {
             commands[command_count++] = token;
             token = strtok(NULL, "|");
         }
 
-        // Validar sintaxis: comandos vacíos entre pipes
+        // Validar comandos vacíos
         bool sintaxis_invalida = false;
         for (int i = 0; i < command_count; i++) {
             while (isspace(*commands[i])) commands[i]++;
@@ -198,23 +219,6 @@ int main() {
             continue;
         }
 
-        // Validar 'exit' dentro de un pipeline
-        if (command_count > 1) {
-            bool exit_en_pipeline = false;
-            for (int i = 0; i < command_count; i++) {
-                while (isspace(*commands[i])) commands[i]++;
-                if (strncmp(commands[i], "exit", 4) == 0 &&
-                    (commands[i][4] == '\0' || isspace(commands[i][4]))) {
-                    exit_en_pipeline = true;
-                    break;
-                }
-            }
-            if (exit_en_pipeline) {
-                fprintf(stderr, "Error: 'exit' no puede estar en un pipeline\n");
-                continue;
-            }
-        }
-
         // Ejecutar 'exit' si es el único comando
         if (command_count == 1) {
             while (isspace(*commands[0])) commands[0]++;
@@ -224,8 +228,10 @@ int main() {
             }
         }
 
-        // Ejecutar normalmente
         ejecutar_comandos_con_pipes(commands, command_count);
+
+    loop_continue:
+        continue;
     }
 
     return 0;
