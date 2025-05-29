@@ -98,7 +98,8 @@ function run_test() {
         return
     fi
 
-    if grep -Fq "$expected" "$TMP_OUT"; then
+    # if grep -Fq "$expected" "$TMP_OUT"; then
+    if grep -F "$expected" "$TMP_OUT" | grep -vq "^Shell>$"; then
         echo "✅ PASS: '$input' → '$expected'"
         ((PASS_COUNT++))
     else
@@ -123,7 +124,8 @@ echo -e "linea1\nlinea2\nlinea3" > lines.txt
 run_test "ls | grep .zip" "archivo1.zip" "Filtra .zip"
 run_test "ls | grep .png" "imagen.png" "Filtra .png"
 run_test "ls | grep .pdf" "documento.pdf" "Filtra .pdf"
-run_test "ls | grep -E \"\\.png\$|\\.zip\$\"" "archivo1.zip" "Regex OR con grep -E"
+# run_test "ls | grep -E \"\\.png\$|\\.zip\$\"" "archivo1.zip" "Regex OR con grep -E"
+run_test 'ls | grep -E "\.png$|\.zip$"' "archivo1.zip" "Regex OR con grep -E"
 run_test "echo hola mundo | tr a-z A-Z" "HOLA MUNDO" "Mayúsculas"
 run_test "cat texto.txt | wc -l" "0" "Archivo vacío"
 run_test "cat archivo1.txt | grep prueba" "contenido de prueba" "Buscar palabra"
