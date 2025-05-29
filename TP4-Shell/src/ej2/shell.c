@@ -9,17 +9,43 @@
 #define MAX_COMMANDS 200
 
 // === NUEVO: parser que respeta comillas ===
-void parse_args_con_comillas(char *input, char *args[]) {
+// void parse_args_con_comillas(char *input, char *args[]) {
+//     int i = 0;
+//     while (*input) {
+//         while (isspace(*input)) input++;  // saltar espacios
+
+//         if (*input == '\0') break;
+
+//         if (*input == '"') {
+//             input++;
+//             args[i++] = input;
+//             while (*input && *input != '"') input++;
+//         } else {
+//             args[i++] = input;
+//             while (*input && !isspace(*input)) input++;
+//         }
+
+//         if (*input) {
+//             *input = '\0';
+//             input++;
+//         }
+//     }
+//     args[i] = NULL;
+// }
+bool parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
         while (isspace(*input)) input++;  // saltar espacios
-
         if (*input == '\0') break;
 
         if (*input == '"') {
             input++;
             args[i++] = input;
             while (*input && *input != '"') input++;
+            if (*input != '"') {
+                fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
+                return false;
+            }
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
@@ -30,8 +56,11 @@ void parse_args_con_comillas(char *input, char *args[]) {
             input++;
         }
     }
+
     args[i] = NULL;
+    return true;
 }
+
 
 
 
@@ -60,7 +89,11 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
             }
 
             char *args[64];
-            parse_args_con_comillas(commands[i], args);  // usar parser que respeta comillas
+            // parse_args_con_comillas(commands[i], args);  // usar parser que respeta comillas
+            if (!parse_args_con_comillas(commands[i], args)) {
+                exit(EXIT_FAILURE);  // error por comillas
+            }
+
 
             if (execvp(args[0], args) == -1) {
                 perror("execvp");                               // ESTO ES LO QUE COMPARA EL TEST DE INVALIDO????
@@ -79,78 +112,6 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
     }
 }
 
-// int main() {
-//     char command[256];
-//     char *commands[MAX_COMMANDS];
-//     int command_count;
-
-//     while (1) {
-//         printf("Shell> ");
-//         fflush(stdout);
-
-//         if (fgets(command, sizeof(command), stdin) == NULL) {
-//             printf("\n");
-//             break;
-//         }
-
-//         command[strcspn(command, "\n")] = '\0';
-
-//         if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
-//             break;
-
-//         // Chequeos de sintaxis inválida antes de tokenizar
-//         if (command[0] == '|' || command[strlen(command) - 1] == '|') {
-//             fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
-//             continue;
-//         }
-//         if (strstr(command, "||") != NULL) {
-//             fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
-//             continue;
-//         }
-
-//         command_count = 0;
-//         char *token = strtok(command, "|");
-//         while (token != NULL && command_count < MAX_COMMANDS) {
-//             commands[command_count++] = token;
-//             token = strtok(NULL, "|");
-//         }
-
-//         if (strncmp(command, "cd", 2) == 0) {
-//             char *path = command + 2;
-//             while (isspace(*path)) path++;
-
-//             if (*path == '\0') {
-//                 path = getenv("HOME");
-//             }
-
-//             if (chdir(path) != 0) {
-//                 perror("cd");
-//             }
-//             continue;
-//         }
-
-//         bool sintaxis_invalida = false;
-
-//         for (int i = 0; i < command_count; i++) {
-//             // Saltar espacios
-//             while (isspace(*commands[i])) commands[i]++;
-//             if (*commands[i] == '\0') {
-//                 sintaxis_invalida = true;
-//                 break;
-//             }
-//         }
-
-//         if (sintaxis_invalida) {
-//             fprintf(stderr, "Error de sintaxis: comando vacío entre pipes\n");
-//             continue;
-//         }
-
-//         ejecutar_comandos_con_pipes(commands, command_count);
-//     }
-
-//     return 0;
-// }
-
 int main() {
     char command[256];
     char *commands[MAX_COMMANDS];
@@ -167,7 +128,10 @@ int main() {
 
         command[strcspn(command, "\n")] = '\0';
 
-        // Chequeo sintaxis simple
+        if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
+            break;
+
+        // Chequeos de sintaxis inválida antes de tokenizar
         if (command[0] == '|' || command[strlen(command) - 1] == '|') {
             fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
             continue;
@@ -177,62 +141,131 @@ int main() {
             continue;
         }
 
-        // Copia para validaciones antes de modificar command original
-        char command_copia[256];
-        strncpy(command_copia, command, sizeof(command_copia));
-
-        // Validar 'exit' dentro de pipelines
-        int count_temp = 0;
-        char *token_temp = strtok(command_copia, "|");
-        while (token_temp && count_temp < MAX_COMMANDS) {
-            while (isspace(*token_temp)) token_temp++;
-            if (strncmp(token_temp, "exit", 4) == 0 &&
-                (token_temp[4] == '\0' || isspace(token_temp[4]))) {
-                if (count_temp > 0) {
-                    fprintf(stderr, "Error: 'exit' no puede estar en un pipeline\n");
-                    goto loop_continue;
-                }
-            }
-            count_temp++;
-            token_temp = strtok(NULL, "|");
-        }
-
-        // Tokenizar comandos reales
         command_count = 0;
         char *token = strtok(command, "|");
-        while (token && command_count < MAX_COMMANDS) {
+        while (token != NULL && command_count < MAX_COMMANDS) {
             commands[command_count++] = token;
             token = strtok(NULL, "|");
         }
 
-        // Validar comandos vacíos
+        if (strncmp(command, "cd", 2) == 0) {
+            char *path = command + 2;
+            while (isspace(*path)) path++;
+
+            if (*path == '\0') {
+                path = getenv("HOME");
+            }
+
+            if (chdir(path) != 0) {
+                perror("cd");
+            }
+            continue;
+        }
+
         bool sintaxis_invalida = false;
+
         for (int i = 0; i < command_count; i++) {
+            // Saltar espacios
             while (isspace(*commands[i])) commands[i]++;
             if (*commands[i] == '\0') {
                 sintaxis_invalida = true;
                 break;
             }
         }
+
         if (sintaxis_invalida) {
             fprintf(stderr, "Error de sintaxis: comando vacío entre pipes\n");
             continue;
         }
 
-        // Ejecutar 'exit' si es el único comando
-        if (command_count == 1) {
-            while (isspace(*commands[0])) commands[0]++;
-            if (strncmp(commands[0], "exit", 4) == 0 &&
-                (commands[0][4] == '\0' || isspace(commands[0][4]))) {
-                break;
-            }
-        }
-
         ejecutar_comandos_con_pipes(commands, command_count);
-
-    loop_continue:
-        continue;
     }
 
     return 0;
 }
+
+// int main() {
+//     char command[256];
+//     char *commands[MAX_COMMANDS];
+//     int command_count;
+
+//     while (1) {
+//         printf("Shell> ");
+//         fflush(stdout);
+
+//         if (fgets(command, sizeof(command), stdin) == NULL) {
+//             printf("\n");
+//             break;
+//         }
+
+//         command[strcspn(command, "\n")] = '\0';
+
+//         // Chequeo sintaxis simple
+//         if (command[0] == '|' || command[strlen(command) - 1] == '|') {
+//             fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
+//             continue;
+//         }
+//         if (strstr(command, "||") != NULL) {
+//             fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
+//             continue;
+//         }
+
+//         // Copia para validaciones antes de modificar command original
+//         char command_copia[256];
+//         strncpy(command_copia, command, sizeof(command_copia));
+
+//         // Validar 'exit' dentro de pipelines
+//         int count_temp = 0;
+//         char *token_temp = strtok(command_copia, "|");
+//         while (token_temp && count_temp < MAX_COMMANDS) {
+//             while (isspace(*token_temp)) token_temp++;
+//             if (strncmp(token_temp, "exit", 4) == 0 &&
+//                 (token_temp[4] == '\0' || isspace(token_temp[4]))) {
+//                 if (count_temp > 0) {
+//                     fprintf(stderr, "Error: 'exit' no puede estar en un pipeline\n");
+//                     goto loop_continue;
+//                 }
+//             }
+//             count_temp++;
+//             token_temp = strtok(NULL, "|");
+//         }
+
+//         // Tokenizar comandos reales
+//         command_count = 0;
+//         char *token = strtok(command, "|");
+//         while (token && command_count < MAX_COMMANDS) {
+//             commands[command_count++] = token;
+//             token = strtok(NULL, "|");
+//         }
+
+//         // Validar comandos vacíos
+//         bool sintaxis_invalida = false;
+//         for (int i = 0; i < command_count; i++) {
+//             while (isspace(*commands[i])) commands[i]++;
+//             if (*commands[i] == '\0') {
+//                 sintaxis_invalida = true;
+//                 break;
+//             }
+//         }
+//         if (sintaxis_invalida) {
+//             fprintf(stderr, "Error de sintaxis: comando vacío entre pipes\n");
+//             continue;
+//         }
+
+//         // Ejecutar 'exit' si es el único comando
+//         if (command_count == 1) {
+//             while (isspace(*commands[0])) commands[0]++;
+//             if (strncmp(commands[0], "exit", 4) == 0 &&
+//                 (commands[0][4] == '\0' || isspace(commands[0][4]))) {
+//                 break;
+//             }
+//         }
+
+//         ejecutar_comandos_con_pipes(commands, command_count);
+
+//     loop_continue:
+//         continue;
+//     }
+
+//     return 0;
+// }
