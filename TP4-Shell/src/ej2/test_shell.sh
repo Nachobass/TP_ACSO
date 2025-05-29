@@ -125,19 +125,19 @@ echo "uno.zip dos.png" > mixto.txt
 echo "linea1" > lines.txt; echo "linea2" >> lines.txt
 
 # === TESTS ===
-run_test "ls | grep .zip\nq" "archivo1.zip" "Filtra .zip"
-run_test "ls | grep .png\nq" "imagen.png" "Filtra .png"
-run_test "ls | grep .pdf\nq" "documento.pdf" "Filtra .pdf"
-run_test "ls | grep -E \".png$|.zip$\"\nq" "archivo1.zip" "Filtra .zip o .png con regex"
-run_test "echo hola mundo | tr a-z A-Z\nq" "HOLA MUNDO" "Mayúsculas"
-run_test "cat texto.txt | wc -l\nq" "0" "Conteo líneas vacías"
-run_test "cat archivo1.txt | grep prueba\nq" "contenido de prueba" "Buscar palabra"
-run_test "echo hola | tr a-z A-Z | tr O A\nq" "HALA" "Pipe múltiple"
-run_test "ls | grep \".png .zip\"\nq" "" "Búsqueda inválida"
-run_test "invalidcmd\nq" "execvp: No such file or directory" "Comando inexistente"
-run_test "echo linea1 >> lines.txt && cat lines.txt | wc -l\nq" "3" "Archivo con múltiples líneas"
-run_test "ls | sort | head -n 1\nq" "archivo1.txt" "Head sobre sort"
-run_test "echo prueba cd\ncd ..\npwd\nq" "$(basename $(pwd))" "cd y pwd"
+run_test "ls | grep .zip" "archivo1.zip" "Filtra .zip"
+run_test "ls | grep .png" "imagen.png" "Filtra .png"
+run_test "ls | grep .pdf" "documento.pdf" "Filtra .pdf"
+run_test "ls | grep -E \".png$|.zip$\"" "archivo1.zip" "Filtra .zip o .png con regex"
+run_test "echo hola mundo | tr a-z A-Z" "HOLA MUNDO" "Mayúsculas"
+run_test "cat texto.txt | wc -l" "0" "Conteo líneas vacías"
+run_test "cat archivo1.txt | grep prueba" "contenido de prueba" "Buscar palabra"
+run_test "echo hola | tr a-z A-Z | tr O A" "HALA" "Pipe múltiple"
+run_test "ls | grep \".png .zip\"" "" "Búsqueda inválida"
+run_test "invalidcmd" "execvp: No such file or directory" "Comando inexistente"
+run_test "echo linea1 >> lines.txt && cat lines.txt | wc -l" "3" "Archivo con múltiples líneas"
+run_test "ls | sort | head -n 1" "archivo1.txt" "Head sobre sort"
+run_test "echo prueba cd\ncd ..\npwd" "$(basename $(pwd))" "cd y pwd"
 
 # === RESULTADO FINAL ===
 cd ..
