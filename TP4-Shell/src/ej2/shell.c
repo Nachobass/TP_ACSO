@@ -114,6 +114,26 @@ int main() {
             commands[command_count++] = token;
             token = strtok(NULL, "|");
         }
+        
+        bool exit_en_pipeline = false;
+
+        if (command_count > 1) {
+            for (int i = 0; i < command_count; i++) {
+                // Saltar espacios
+                while (isspace(*commands[i])) commands[i]++;
+                if (strncmp(commands[i], "exit", 4) == 0 && 
+                    (commands[i][4] == '\0' || isspace(commands[i][4]))) {
+                    exit_en_pipeline = true;
+                    break;
+                }
+            }
+        }
+
+        if (exit_en_pipeline) {
+            fprintf(stderr, "Error: 'exit' no puede estar en un pipeline\n");
+            continue;
+        }
+
 
         if (strncmp(command, "cd", 2) == 0) {
             char *path = command + 2;
