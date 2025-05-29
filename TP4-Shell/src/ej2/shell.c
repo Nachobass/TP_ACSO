@@ -119,21 +119,21 @@ int main() {
             continue;
         }
 
-        command_count = 0;
-        char *saveptr;
-        char *token = strtok_r(command, "|", &saveptr);
-        while (token != NULL && command_count < MAX_COMMANDS) {
-            while (isspace(*token)) token++;
-            if (*token == '\0') {
-                fprintf(stderr, "Error de sintaxis: comando vacío entre pipes\n");
-                command_count = 0;  // evita ejecución
+        bool sintaxis_invalida = false;
+
+        for (int i = 0; i < command_count; i++) {
+            // Saltar espacios
+            while (isspace(*commands[i])) commands[i]++;
+            if (*commands[i] == '\0') {
+                sintaxis_invalida = true;
                 break;
             }
-            commands[command_count++] = token;
-            token = strtok_r(NULL, "|", &saveptr);
         }
 
-        if (command_count == 0) continue;  // salta si hubo error de sintaxis
+        if (sintaxis_invalida) {
+            fprintf(stderr, "Error de sintaxis: comando vacío entre pipes\n");
+            continue;
+        }
 
         ejecutar_comandos_con_pipes(commands, command_count);
     }
