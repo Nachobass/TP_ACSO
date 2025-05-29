@@ -191,36 +191,43 @@
 
 void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
+    int in_quote = 0;
+    char *arg_start = NULL;
+
     while (*input) {
-        while (isspace(*input)) input++;  // Saltar espacios
+        while (isspace(*input)) input++;  // saltar espacios
 
         if (*input == '\0') break;
 
         if (*input == '"') {
-            input++;  // saltar la comilla inicial
-            args[i++] = input;
+            in_quote = 1;
+            input++;
+            arg_start = input;
 
             while (*input && *input != '"') input++;
 
             if (*input == '"') {
-                *input = '\0';  // termina el string entre comillas
-                input++;
+                *input = '\0';
+                args[i++] = arg_start;
+                input++;  // pasar la comilla de cierre
             } else {
                 fprintf(stderr, "Error: comillas sin cerrar\n");
                 args[0] = NULL;
                 return;
             }
         } else {
-            args[i++] = input;
+            arg_start = input;
             while (*input && !isspace(*input)) input++;
             if (*input) {
                 *input = '\0';
                 input++;
             }
+            args[i++] = arg_start;
         }
     }
     args[i] = NULL;
 }
+
 
 
 
