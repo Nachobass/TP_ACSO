@@ -32,11 +32,49 @@
 //     }
 //     args[i] = NULL;
 // }
+
+// bool parse_args_con_comillas(char *input, char *args[]) {
+//     int i = 0;
+//     while (*input) {
+//         while (isspace(*input)) input++;  // saltar espacios
+//         if (*input == '\0') break;
+
+//         if (*input == '"') {
+//             input++;
+//             args[i++] = input;
+//             while (*input && *input != '"') input++;
+//             if (*input != '"') {
+//                 fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
+//                 return false;
+//             }
+//         } else {
+//             args[i++] = input;
+//             while (*input && !isspace(*input)) input++;
+//         }
+
+//         if (*input) {
+//             *input = '\0';
+//             input++;
+//         }
+//     }
+
+//     args[i] = NULL;
+//     return true;
+// }
+
+
+#define MAX_ARGS 63
+
 bool parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
-        while (isspace(*input)) input++;  // saltar espacios
+        while (isspace(*input)) input++;
         if (*input == '\0') break;
+
+        if (i >= MAX_ARGS) {
+            fprintf(stderr, "Error: exceso de argumentos\n");
+            return false;
+        }
 
         if (*input == '"') {
             input++;
@@ -60,7 +98,6 @@ bool parse_args_con_comillas(char *input, char *args[]) {
     args[i] = NULL;
     return true;
 }
-
 
 
 
