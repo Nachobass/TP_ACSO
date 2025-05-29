@@ -124,19 +124,19 @@ run_test "| | hola |" "Comando entre pipes vacíos" "error"
 
 # ERRORES DE PARSING Y COMANDOS INVÁLIDOS
 run_test "inexistentecomando" "Comando inexistente" "error"
-run_test "echo \"hola" "Comillas abiertas sin cerrar"
+run_test "echo \"hola" "Comillas abiertas sin cerrar"                   # NO PASA
 run_test "   echo    prueba   " "Espaciado irregular"
 
 # COMANDOS ESPECIALES Y VALORES BORDES
 run_test "exit" "Comando de salida"
 run_test "yes | head -n 5" "Yes truncado por head"
-run_test "echo \"\"" "Echo con string vacío"
+run_test "echo \"\"" "Echo con string vacío"                            # NO PASA  
 run_test "echo hola | grep -v hola" "Grep que descarta salida"
 run_test "cat /dev/null | wc -l" "Conteo sobre input vacío"
 
 # EXTRA CREDIT: COMANDOS COMPLEJOS
-run_test "cat $TEST_FILE | grep -E \"\\.png$|\\.zip$\"" "Extra Credit: grep con regex compuesta"
-run_test "ls | grep -E \"\\.png$|\.zip$\"" "Extra Credit: grep con regex compuesta"
+run_test "cat $TEST_FILE | grep -E \"\\.png$|\\.zip$\"" "Extra Credit: grep con regex compuesta"        # NO PASA
+run_test "ls | grep -E \"\\.png$|\.zip$\"" "Extra Credit: grep con regex compuesta"                    # NO PASA
 
 # RESUMEN FINAL
 echo -e "${BLUE}============================================${NC}"

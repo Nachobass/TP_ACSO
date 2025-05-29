@@ -160,6 +160,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #define MAX_COMMANDS 200
 
@@ -189,37 +190,50 @@
 // }
 void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
+
     while (*input) {
-        while (isspace(*input)) input++;  // saltar espacios
+        while (isspace(*input)) input++;  // Saltar espacios
 
         if (*input == '\0') break;
 
-        if (*input == '"') {
-            input++;  // skip opening quote
-            args[i] = input;
-            
-            // Search for closing quote
-            char *closing_quote = strchr(input, '"');
-            if (closing_quote == NULL) {
-                // Unclosed quote detected - treat rest of string as error
-                fprintf(stderr, "Error: unclosed quotes\n");
-                args[0] = NULL;  // Clear arguments to prevent execution
+        // Comillas simples o dobles
+        if (*input == '"' || *input == '\'') {
+            char quote = *input;
+            input++; // saltar comilla inicial
+            args[i++] = input;
+
+            bool escape = false;
+            while (*input) {
+                if (*input == '\\' && !escape) {
+                    escape = true;
+                    input++;
+                    continue;
+                }
+                if (*input == quote && !escape) {
+                    break; // cerró la comilla
+                }
+                escape = false;
+                input++;
+            }
+
+            if (*input != quote) {
+                fprintf(stderr, "Error: comillas no cerradas\n");
+                args[0] = NULL;
                 return;
             }
-            
-            *closing_quote = '\0';  // terminate the argument at closing quote
-            input = closing_quote + 1;
-            i++;
+
+            *input = '\0'; // terminar string
+            input++;       // avanzar tras la comilla
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
-        }
-
-        if (*input) {
-            *input = '\0';
-            input++;
+            if (*input) {
+                *input = '\0';
+                input++;
+            }
         }
     }
+
     args[i] = NULL;
 }
 
@@ -249,10 +263,10 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
             }
 
             char *args[64];
-            parse_args_con_comillas(commands[i], args);  // 🚀 usar parser que respeta comillas
+            parse_args_con_comillas(commands[i], args);  // usar parser que respeta comillas
 
             if (execvp(args[0], args) == -1) {
-                perror("execvp");
+                perror("execvp");                               // ESTO ES LO QUE COMPARA EL TEST DE INVALIDO????
                 exit(EXIT_FAILURE);
             }
         }
