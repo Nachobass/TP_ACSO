@@ -164,71 +164,29 @@
 #define MAX_COMMANDS 200
 
 // === NUEVO: parser que respeta comillas ===
-// void parse_args_con_comillas(char *input, char *args[]) {
-//     int i = 0;
-//     while (*input) {
-//         while (isspace(*input)) input++;  // saltar espacios
-
-//         if (*input == '\0') break;
-
-//         if (*input == '"') {
-//             input++;
-//             args[i++] = input;
-//             while (*input && *input != '"') input++;
-//         } else {
-//             args[i++] = input;
-//             while (*input && !isspace(*input)) input++;
-//         }
-
-//         if (*input) {
-//             *input = '\0';
-//             input++;
-//         }
-//     }
-//     args[i] = NULL;
-// }
-
-
 void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
-    char *p = input;
-    char *start = NULL;
-    int in_quotes = 0;
+    while (*input) {
+        while (isspace(*input)) input++;  // saltar espacios
 
-    while (*p) {
-        while (isspace(*p)) p++; // saltar espacios
+        if (*input == '\0') break;
 
-        if (*p == '\0') break;
-
-        if (*p == '"') {
-            p++;  // saltar comilla inicial
-            start = p;
-            while (*p && *p != '"') p++;
-
-            if (*p == '\0') {
-                fprintf(stderr, "Error: comillas no cerradas\n");
-                args[0] = NULL;
-                return;
-            }
-
-            *p = '\0';  // terminar string
-            args[i++] = start;
-            p++;  // saltar comilla final
+        if (*input == '"') {
+            input++;
+            args[i++] = input;
+            while (*input && *input != '"') input++;
         } else {
-            start = p;
-            while (*p && !isspace(*p)) p++;
-            if (*p) {
-                *p = '\0';
-                p++;
-            }
-            args[i++] = start;
+            args[i++] = input;
+            while (*input && !isspace(*input)) input++;
+        }
+
+        if (*input) {
+            *input = '\0';
+            input++;
         }
     }
     args[i] = NULL;
 }
-
-
-
 
 
 // ==========================================
