@@ -136,6 +136,7 @@ run_test "cat /dev/null | wc -l" "Conteo sobre input vacío"
 
 # EXTRA CREDIT: COMANDOS COMPLEJOS
 run_test "cat $TEST_FILE | grep -E \"\\.png$|\\.zip$\"" "Extra Credit: grep con regex compuesta"
+run_test "ls | grep -E \"\\.png$|\.zip$\"" "Extra Credit: grep con regex compuesta"
 
 # RESUMEN FINAL
 echo -e "${BLUE}============================================${NC}"
