@@ -98,6 +98,16 @@ int main() {
         if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
             break;
 
+        // Chequeos de sintaxis inválida antes de tokenizar
+        if (command[0] == '|' || command[strlen(command) - 1] == '|') {
+            fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
+            continue;
+        }
+        if (strstr(command, "||") != NULL) {
+            fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
+            continue;
+        }
+
         command_count = 0;
         char *token = strtok(command, "|");
         while (token != NULL && command_count < MAX_COMMANDS) {
