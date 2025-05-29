@@ -164,29 +164,29 @@
 #define MAX_COMMANDS 200
 
 // === NUEVO: parser que respeta comillas ===
-// void parse_args_con_comillas(char *input, char *args[]) {
-//     int i = 0;
-//     while (*input) {
-//         while (isspace(*input)) input++;  // saltar espacios
+void parse_args_con_comillas(char *input, char *args[]) {
+    int i = 0;
+    while (*input) {
+        while (isspace(*input)) input++;  // saltar espacios
 
-//         if (*input == '\0') break;
+        if (*input == '\0') break;
 
-//         if (*input == '"') {
-//             input++;
-//             args[i++] = input;
-//             while (*input && *input != '"') input++;
-//         } else {
-//             args[i++] = input;
-//             while (*input && !isspace(*input)) input++;
-//         }
+        if (*input == '"') {
+            input++;
+            args[i++] = input;
+            while (*input && *input != '"') input++;
+        } else {
+            args[i++] = input;
+            while (*input && !isspace(*input)) input++;
+        }
 
-//         if (*input) {
-//             *input = '\0';
-//             input++;
-//         }
-//     }
-//     args[i] = NULL;
-// }
+        if (*input) {
+            *input = '\0';
+            input++;
+        }
+    }
+    args[i] = NULL;
+}
 
 
 // void parse_args_con_comillas(char *input, char *args[]) {
@@ -225,43 +225,43 @@
 
 //     args[i] = NULL;
 // }
-void parse_args_con_comillas(char *input, char *args[]) {
-    int i = 0;
+// void parse_args_con_comillas(char *input, char *args[]) {
+//     int i = 0;
 
-    while (*input) {
-        // Saltar espacios
-        while (isspace(*input)) input++;
-        if (*input == '\0') break;
+//     while (*input) {
+//         // Saltar espacios
+//         while (isspace(*input)) input++;
+//         if (*input == '\0') break;
 
-        // Si comienza con comillas (simples o dobles)
-        if (*input == '"' || *input == '\'') {
-            char quote = *input;
-            input++;  // saltar la comilla de apertura
-            args[i++] = input;
+//         // Si comienza con comillas (simples o dobles)
+//         if (*input == '"' || *input == '\'') {
+//             char quote = *input;
+//             input++;  // saltar la comilla de apertura
+//             args[i++] = input;
 
-            while (*input && *input != quote) input++;
+//             while (*input && *input != quote) input++;
 
-            if (*input != quote) {
-                fprintf(stderr, "Error: comillas no cerradas\n");
-                args[0] = NULL;
-                return;
-            }
+//             if (*input != quote) {
+//                 fprintf(stderr, "Error: comillas no cerradas\n");
+//                 args[0] = NULL;
+//                 return;
+//             }
 
-            *input = '\0';  // cerrar el string eliminando la comilla final
-            input++;        // avanzar más allá de la comilla
-        } else {
-            // argumento sin comillas
-            args[i++] = input;
-            while (*input && !isspace(*input)) input++;
-            if (*input) {
-                *input = '\0';
-                input++;
-            }
-        }
-    }
+//             *input = '\0';  // cerrar el string eliminando la comilla final
+//             input++;        // avanzar más allá de la comilla
+//         } else {
+//             // argumento sin comillas
+//             args[i++] = input;
+//             while (*input && !isspace(*input)) input++;
+//             if (*input) {
+//                 *input = '\0';
+//                 input++;
+//             }
+//         }
+//     }
 
-    args[i] = NULL;
-}
+//     args[i] = NULL;
+// }
 
 
 // ==========================================
