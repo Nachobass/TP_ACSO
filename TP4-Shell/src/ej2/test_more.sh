@@ -130,7 +130,8 @@ run_test "   echo    prueba   " "Espaciado irregular"
 # COMANDOS ESPECIALES Y VALORES BORDES
 run_test "exit" "Comando de salida"
 run_test "yes | head -n 5" "Yes truncado por head"
-run_test "echo \"\"" "Echo con string vacío"                            # NO PASA  
+# run_test "echo \"\"" "Echo con string vacío"                            # NO PASA  
+run_test 'echo ""' "" "Echo con string vacío"
 run_test "echo hola | grep -v hola" "Grep que descarta salida"
 run_test "cat /dev/null | wc -l" "Conteo sobre input vacío"
 
