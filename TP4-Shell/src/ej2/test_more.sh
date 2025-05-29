@@ -46,7 +46,10 @@ run_test() {
     echo -e "   ${BLUE}Comando:${NC} $input"
 
     # Get shell output
-    echo -e "$input\nexit" | ./shell 2>&1 | sed 's/^Shell> //' | grep -v "^Shell> *$" | grep -v "^$" > "$SHELL_OUT"
+    # echo -e "$input\nexit" | ./shell 2>&1 | sed 's/^Shell> //' | grep -v "^Shell> *$" | grep -v "^$" > "$SHELL_OUT"
+    echo -e "$input\nexit" | ./shell 2>&1 > "$SHELL_OUT"
+
+    if grep -qi "comillas no cerradas" "$SHELL_OUT"; then
     
     if [ "$should_error" = "error" ]; then
         # For error cases, just check if there's some error output
