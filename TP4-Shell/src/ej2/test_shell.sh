@@ -99,7 +99,8 @@ function run_test() {
     fi
 
     # if grep -Fq "$expected" "$TMP_OUT"; then
-    if grep -F "$expected" "$TMP_OUT" | grep -vq "^Shell>$"; then
+    clean_output=$(sed 's/^Shell> *//' "$TMP_OUT")
+    if echo "$clean_output" | grep -Fq "$expected"; then
         echo "✅ PASS: '$input' → '$expected'"
         ((PASS_COUNT++))
     else
