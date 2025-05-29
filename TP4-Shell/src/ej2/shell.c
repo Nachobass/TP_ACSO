@@ -165,82 +165,30 @@
 #define MAX_COMMANDS 200
 
 // === NUEVO: parser que respeta comillas ===
-// void parse_args_con_comillas(char *input, char *args[]) {
-//     int i = 0;
-//     while (*input) {
-//         while (isspace(*input)) input++;  // saltar espacios
-
-//         if (*input == '\0') break;
-
-//         if (*input == '"') {
-//             input++;
-//             args[i++] = input;
-//             while (*input && *input != '"') input++;
-//         } else {
-//             args[i++] = input;
-//             while (*input && !isspace(*input)) input++;
-//         }
-
-//         if (*input) {
-//             *input = '\0';
-//             input++;
-//         }
-//     }
-//     args[i] = NULL;
-// }
 void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
-
     while (*input) {
         while (isspace(*input)) input++;  // saltar espacios
 
         if (*input == '\0') break;
 
-        // Si es comilla
-        if (*input == '"' || *input == '\'') {
-            char quote = *input;
-            input++; // saltar comilla inicial
+        if (*input == '"') {
+            input++;
             args[i++] = input;
-
-            bool escape = false;
-            char *dst = input; // usamos dst para quitar escapes dentro del string
-
-            while (*input) {
-                if (*input == '\\' && !escape) {
-                    escape = true;
-                    input++;
-                    continue;
-                }
-                if (*input == quote && !escape) {
-                    break;
-                }
-                if (escape) {
-                    *dst++ = '\\';  // preservar el backslash si se escapó algo distinto a quote
-                    escape = false;
-                }
-                *dst++ = *input++;
-            }
-
-            if (*input != quote) {
-                fprintf(stderr, "Error: comillas no cerradas\n");
-                args[0] = NULL;
-                return;
-            }
-
-            *dst = '\0';  // terminar la string copiada
-            input++;      // saltar la comilla de cierre
+            while (*input && *input != '"') input++;
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
-            if (*input) {
-                *input = '\0';
-                input++;
-            }
+        }
+
+        if (*input) {
+            *input = '\0';
+            input++;
         }
     }
-
     args[i] = NULL;
 }
+
 
 
 // ==========================================
