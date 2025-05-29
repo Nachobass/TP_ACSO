@@ -192,17 +192,19 @@ void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
 
     while (*input) {
-        while (isspace(*input)) input++;  // Saltar espacios
+        while (isspace(*input)) input++;  // saltar espacios
 
         if (*input == '\0') break;
 
-        // Comillas simples o dobles
+        // Si es comilla
         if (*input == '"' || *input == '\'') {
             char quote = *input;
             input++; // saltar comilla inicial
             args[i++] = input;
 
             bool escape = false;
+            char *dst = input; // usamos dst para quitar escapes dentro del string
+
             while (*input) {
                 if (*input == '\\' && !escape) {
                     escape = true;
@@ -210,10 +212,13 @@ void parse_args_con_comillas(char *input, char *args[]) {
                     continue;
                 }
                 if (*input == quote && !escape) {
-                    break; // cerró la comilla
+                    break;
                 }
-                escape = false;
-                input++;
+                if (escape) {
+                    *dst++ = '\\';  // preservar el backslash si se escapó algo distinto a quote
+                    escape = false;
+                }
+                *dst++ = *input++;
             }
 
             if (*input != quote) {
@@ -222,8 +227,8 @@ void parse_args_con_comillas(char *input, char *args[]) {
                 return;
             }
 
-            *input = '\0'; // terminar string
-            input++;       // avanzar tras la comilla
+            *dst = '\0';  // terminar la string copiada
+            input++;      // saltar la comilla de cierre
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
