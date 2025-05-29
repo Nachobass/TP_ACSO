@@ -9,6 +9,11 @@ function run_test() {
     local input="$1"
     local expected="$2"
     echo -e "$input" | $SHELL_EXEC > $TMP_OUT 2>&1
+    if [ ! -x "$SHELL_EXEC" ]; then
+        echo "❌ Ejecutable $SHELL_EXEC no encontrado o no es ejecutable"
+        exit 1
+    fi
+
 
     if grep -Fq "$expected" $TMP_OUT; then
         echo "✅ PASS: '$input' → '$expected'"
