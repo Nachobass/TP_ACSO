@@ -171,10 +171,22 @@ void parse_args_con_comillas(char *input, char *args[]) {
 
         if (*input == '\0') break;
 
+        // if (*input == '"') {
+        //     input++;
+        //     args[i++] = input;
+        //     while (*input && *input != '"') input++;
+        // }
         if (*input == '"') {
             input++;
             args[i++] = input;
+            char *start = input;
             while (*input && *input != '"') input++;
+
+            if (*input != '"') {
+                fprintf(stderr, "Error: comillas no cerradas\n");
+                args[0] = NULL;
+                return;
+            }
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
