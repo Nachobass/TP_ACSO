@@ -164,6 +164,29 @@
 #define MAX_COMMANDS 200
 
 // === NUEVO: parser que respeta comillas ===
+// void parse_args_con_comillas(char *input, char *args[]) {
+//     int i = 0;
+//     while (*input) {
+//         while (isspace(*input)) input++;  // saltar espacios
+
+//         if (*input == '\0') break;
+
+//         if (*input == '"') {
+//             input++;
+//             args[i++] = input;
+//             while (*input && *input != '"') input++;
+//         } else {
+//             args[i++] = input;
+//             while (*input && !isspace(*input)) input++;
+//         }
+
+//         if (*input) {
+//             *input = '\0';
+//             input++;
+//         }
+//     }
+//     args[i] = NULL;
+// }
 void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
@@ -172,9 +195,21 @@ void parse_args_con_comillas(char *input, char *args[]) {
         if (*input == '\0') break;
 
         if (*input == '"') {
-            input++;
-            args[i++] = input;
-            while (*input && *input != '"') input++;
+            input++;  // skip opening quote
+            args[i] = input;
+            
+            // Search for closing quote
+            char *closing_quote = strchr(input, '"');
+            if (closing_quote == NULL) {
+                // Unclosed quote detected - treat rest of string as error
+                fprintf(stderr, "Error: unclosed quotes\n");
+                args[0] = NULL;  // Clear arguments to prevent execution
+                return;
+            }
+            
+            *closing_quote = '\0';  // terminate the argument at closing quote
+            input = closing_quote + 1;
+            i++;
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
