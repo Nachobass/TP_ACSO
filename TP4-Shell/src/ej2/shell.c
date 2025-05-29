@@ -164,6 +164,29 @@
 #define MAX_COMMANDS 200
 
 // === NUEVO: parser que respeta comillas ===
+// void parse_args_con_comillas(char *input, char *args[]) {
+//     int i = 0;
+//     while (*input) {
+//         while (isspace(*input)) input++;  // saltar espacios
+
+//         if (*input == '\0') break;
+
+//         if (*input == '"') {
+//             input++;
+//             args[i++] = input;
+//             while (*input && *input != '"') input++;
+//         } else {
+//             args[i++] = input;
+//             while (*input && !isspace(*input)) input++;
+//         }
+
+//         if (*input) {
+//             *input = '\0';
+//             input++;
+//         }
+//     }
+//     args[i] = NULL;
+// }
 void parse_args_con_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
@@ -171,34 +194,36 @@ void parse_args_con_comillas(char *input, char *args[]) {
 
         if (*input == '\0') break;
 
-        // if (*input == '"') {
-        //     input++;
-        //     args[i++] = input;
-        //     while (*input && *input != '"') input++;
-        // }
-        if (*input == '"') {
-            input++;
-            args[i++] = input;
-            char *start = input;
-            while (*input && *input != '"') input++;
+        if (*input == '"' || *input == '\'') {
+            char quote = *input;  // guardar tipo de comilla
+            input++;              // avanzar después de la comilla
 
-            if (*input != '"') {
+            args[i++] = input;    // comienzo del argumento
+
+            // avanzar hasta la comilla de cierre
+            while (*input && *input != quote) input++;
+
+            if (*input != quote) {
                 fprintf(stderr, "Error: comillas no cerradas\n");
-                args[0] = NULL;
+                args[0] = NULL;  // invalidar argumentos
                 return;
             }
+
+            *input = '\0';  // reemplazar comilla de cierre por null
+            input++;        // avanzar más allá de la comilla
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
-        }
-
-        if (*input) {
-            *input = '\0';
-            input++;
+            if (*input) {
+                *input = '\0';
+                input++;
+            }
         }
     }
+
     args[i] = NULL;
 }
+
 // ==========================================
 
 void ejecutar_comandos_con_pipes(char *commands[], int count) {
