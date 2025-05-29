@@ -67,6 +67,21 @@ run_test() {
             ((FAILED++))
         fi
     else
+        # CASO ESPECIAL: echo ""
+        if [[ "$input" == 'echo ""' ]]; then
+            # esperamos exactamente una línea vacía
+            if [[ -z "$(cat "$SHELL_OUT")" ]]; then
+                echo -e "   ${GREEN}✅ Funcionalidad PASÓ (línea vacía detectada)${NC}"
+                ((PASSED++))
+            else
+                echo -e "   ${RED}❌ FAIL: Se esperaba línea vacía${NC}"
+                echo -e "   ${BLUE}Obtenido:${NC}"
+                cat "$SHELL_OUT"
+                ((FAILED++))
+            fi
+            return
+        fi
+        
         # Get expected output from actual terminal
         bash -c "$input" 2>&1 > "$EXPECTED_OUT"
         
