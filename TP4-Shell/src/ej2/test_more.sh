@@ -139,7 +139,10 @@ run_test "cat /dev/null | wc -l" "Conteo sobre input vacío"
 # EXTRA CREDIT: COMANDOS COMPLEJOS
 run_test "cat $TEST_FILE | grep -E \"\\.png$|\\.zip$\"" "Extra Credit: grep con regex compuesta"        # NO PASA
 run_test "ls | grep -E \"\\.png$|\.zip$\"" "Extra Credit: grep con regex compuesta"                    # NO PASA
-run_test "ls | grep -E "\.png$|\.zip$"" "Extra Credit"
+# run_test "ls | grep -E "\.png$|\.zip$"" "Extra Credit"
+run_test 'ls | grep -E "\.png$|\.zip$"' "archivo1.zip" "Extra Credit"
+run_test "ls | grep -E \\\"\\.png\$|\\.zip\\\$\\\"" "archivo1.zip" "Extra Credit"
+
 
 # RESUMEN FINAL
 echo -e "${BLUE}============================================${NC}"
