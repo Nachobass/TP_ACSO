@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -5,7 +6,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <signal.h>
 
 #define MAX_COMMANDS 100
 #define MAX_ARGS 64
