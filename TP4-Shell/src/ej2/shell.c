@@ -85,10 +85,6 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
 
     for (int i = 0; i < count; i++) {
         pids[i] = fork();
-        if (pids[i] < 0) {
-            perror("fork");
-            exit(EXIT_FAILURE);
-        }
         if (pids[i] == 0) {
             if (i > 0) dup2(pipes[i - 1][0], STDIN_FILENO);
             if (i < count - 1) dup2(pipes[i][1], STDOUT_FILENO);
