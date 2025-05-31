@@ -57,19 +57,6 @@ bool parse_args_with_comillas(char *input, char *args[]) {
             return false;
         }
 
-        // if (*input == '"') {
-        //     input++;
-        //     args[i++] = input;
-        //     while (*input && *input != '"') input++;
-        //     if (*input != '"') {
-        //         fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
-        //         return false;
-        //     }
-        // } else {
-        //     args[i++] = input;
-        //     while (*input && !isspace(*input)) input++;
-        // }
-
         if (*input == '"') {
             input++;
             args[i++] = input;
@@ -78,17 +65,10 @@ bool parse_args_with_comillas(char *input, char *args[]) {
                 fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
                 return false;
             }
-            *input = '\0';  // ← Terminamos la cadena correctamente
-            input++;
         } else {
             args[i++] = input;
             while (*input && !isspace(*input)) input++;
-            if (*input) {
-                *input = '\0';
-                input++;
-            }
         }
-
 
         if (*input) {
             *input = '\0';
