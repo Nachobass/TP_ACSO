@@ -5,10 +5,29 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <signal.h>
 
 #define MAX_COMMANDS 100
 #define MAX_ARGS 64
 #define CMD_BUF_SIZE 4096
+
+
+
+
+// ========================= SETUP SIGNALS =========================
+
+void setup_signals() {
+    struct sigaction sa;
+
+    // Ignorar Ctrl+C (SIGINT) en el shell principal
+    memset( &sa, 0, sizeof(sa) );
+    sa.sa_handler = SIG_IGN;
+    sigaction( SIGINT, &sa, NULL );
+
+    // Ignorar Ctrl+Z (SIGTSTP)
+    sigaction( SIGTSTP, &sa, NULL );
+}
+
 
 // ========================= PARSER CON COMILAS Y VALIDACIONES =========================
 
@@ -128,6 +147,12 @@ int main() {
     char *commands[MAX_COMMANDS];
     int command_count;
 
+    setup_signals();
+
+    if( isatty(STDIN_FILENO) ){
+        printf("Shell started ok. Type 'exit' or 'q' to quit.\n");
+    }
+
     while( 1 ){
         if( isatty(STDIN_FILENO) ){
             printf("Shell> ");
@@ -196,6 +221,10 @@ int main() {
         }
 
         ejecutar_comandos_con_pipes(commands, command_count);
+    }
+
+    if( isatty(STDIN_FILENO) ){
+        printf("Shell terminated ok\n");
     }
 
     return 0;
