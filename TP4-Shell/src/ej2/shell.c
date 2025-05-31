@@ -136,6 +136,23 @@ int main() {
             token = strtok(NULL, "|");
         }
 
+        bool contiene_exit = false;
+        for (int i = 0; i < command_count; i++) {
+            char temp[256];
+            strncpy(temp, commands[i], sizeof(temp) - 1);
+            temp[sizeof(temp) - 1] = '\0';
+            char *args[64];
+            if (parse_args_con_comillas(temp, args) && args[0] && strcmp(args[0], "exit") == 0) {
+                contiene_exit = true;
+                break;
+            }
+        }
+        if (contiene_exit) {
+            fprintf(stderr, "Error: 'exit' no puede usarse dentro de un pipeline\n");
+            continue;
+        }
+
+
         if (strncmp(command, "cd", 2) == 0) {
             char *path = command + 2;
             while (isspace(*path)) path++;
