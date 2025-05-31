@@ -287,44 +287,10 @@
 
 // ========================= PARSER CON COMILLAS Y VALIDACIONES =========================
 
-// bool parse_args_with_comillas(char *input, char *args[]) {
-//     int i = 0;
-//     while (*input) {
-//         while (isspace(*input)) input++;
-//         if (*input == '\0') break;
-
-//         if (i >= MAX_ARGS) {
-//             fprintf(stderr, "Error: exceso de argumentos\n");
-//             return false;
-//         }
-
-//         if (*input == '"') {
-//             input++;
-//             args[i++] = input;
-//             while (*input && *input != '"') input++;
-//             if (*input != '"') {
-//                 fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
-//                 return false;
-//             }
-//         } else {
-//             args[i++] = input;
-//             while (*input && !isspace(*input)) input++;
-//         }
-
-//         if (*input) {
-//             *input = '\0';
-//             input++;
-//         }
-//     }
-
-//     args[i] = NULL;
-//     return true;
-// }
-
 bool parse_args_with_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
-        while (isspace((unsigned char)*input)) input++;
+        while (isspace(*input)) input++;
         if (*input == '\0') break;
 
         if (i >= MAX_ARGS) {
@@ -334,21 +300,20 @@ bool parse_args_with_comillas(char *input, char *args[]) {
 
         if (*input == '"') {
             input++;
-            args[i++] = input;  // incluso si está vacío
+            args[i++] = input;
             while (*input && *input != '"') input++;
             if (*input != '"') {
                 fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
                 return false;
             }
-            *input = '\0';
-            input++;
         } else {
             args[i++] = input;
-            while (*input && !isspace((unsigned char)*input)) input++;
-            if (*input) {
-                *input = '\0';
-                input++;
-            }
+            while (*input && !isspace(*input)) input++;
+        }
+
+        if (*input) {
+            *input = '\0';
+            input++;
         }
     }
 
@@ -437,8 +402,13 @@ int main() {
     int command_count;
 
     while (1) {
-        printf("Shell> ");
-        fflush(stdout);
+        // printf("Shell> ");
+        // fflush(stdout);
+        if (isatty(STDIN_FILENO)) {
+            printf("Shell> ");
+            fflush(stdout);
+        }
+
 
         if (fgets(command, sizeof(command), stdin) == NULL) {
             break;
