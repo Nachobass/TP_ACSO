@@ -287,10 +287,44 @@
 
 // ========================= PARSER CON COMILLAS Y VALIDACIONES =========================
 
+// bool parse_args_with_comillas(char *input, char *args[]) {
+//     int i = 0;
+//     while (*input) {
+//         while (isspace(*input)) input++;
+//         if (*input == '\0') break;
+
+//         if (i >= MAX_ARGS) {
+//             fprintf(stderr, "Error: exceso de argumentos\n");
+//             return false;
+//         }
+
+//         if (*input == '"') {
+//             input++;
+//             args[i++] = input;
+//             while (*input && *input != '"') input++;
+//             if (*input != '"') {
+//                 fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
+//                 return false;
+//             }
+//         } else {
+//             args[i++] = input;
+//             while (*input && !isspace(*input)) input++;
+//         }
+
+//         if (*input) {
+//             *input = '\0';
+//             input++;
+//         }
+//     }
+
+//     args[i] = NULL;
+//     return true;
+// }
+
 bool parse_args_with_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
-        while (isspace(*input)) input++;
+        while (isspace((unsigned char)*input)) input++;
         if (*input == '\0') break;
 
         if (i >= MAX_ARGS) {
@@ -300,20 +334,21 @@ bool parse_args_with_comillas(char *input, char *args[]) {
 
         if (*input == '"') {
             input++;
-            args[i++] = input;
+            args[i++] = input;  // incluso si está vacío
             while (*input && *input != '"') input++;
             if (*input != '"') {
                 fprintf(stderr, "Error: comillas abiertas sin cerrar\n");
                 return false;
             }
-        } else {
-            args[i++] = input;
-            while (*input && !isspace(*input)) input++;
-        }
-
-        if (*input) {
             *input = '\0';
             input++;
+        } else {
+            args[i++] = input;
+            while (*input && !isspace((unsigned char)*input)) input++;
+            if (*input) {
+                *input = '\0';
+                input++;
+            }
         }
     }
 
@@ -373,15 +408,9 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
                 exit(EXIT_FAILURE);
             }
 
-            // if (strcmp(args[0], "exit") == 0) {
-            //     exit(0);
-            // }
             if (strcmp(args[0], "exit") == 0) {
-                execlp("true", "true", (char *)NULL);  // produce salida vacía, pasa EOF al pipe
-                perror("execlp");
-                exit(1);
+                exit(0);
             }
-
 
             if (execvp(args[0], args) == -1) {
                 perror("execvp");
