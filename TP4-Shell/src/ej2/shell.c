@@ -373,9 +373,15 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
                 exit(EXIT_FAILURE);
             }
 
+            // if (strcmp(args[0], "exit") == 0) {
+            //     exit(0);
+            // }
             if (strcmp(args[0], "exit") == 0) {
-                exit(0);
+                execlp("true", "true", (char *)NULL);  // produce salida vacía, pasa EOF al pipe
+                perror("execlp");
+                exit(1);
             }
+
 
             if (execvp(args[0], args) == -1) {
                 perror("execvp");
