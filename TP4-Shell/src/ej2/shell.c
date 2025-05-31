@@ -154,17 +154,34 @@ int main() {
             continue;
         }
 
+        // command_count = 0;
+        // char *token = strtok(command, "|");
+        // while (token != NULL && command_count < MAX_COMMANDS) {
+        //     commands[command_count++] = token;
+        //     token = strtok(NULL, "|");
+        // }
         command_count = 0;
-        char *token = strtok(command, "|");
-        while (token != NULL && command_count < MAX_COMMANDS) {
-            commands[command_count++] = token;
-            token = strtok(NULL, "|");
+        char *start = command;
+        bool in_quotes = false;
+
+        for (char *p = command; ; ++p) {
+            if (*p == '"') {
+                in_quotes = !in_quotes;
+            } else if (*p == '|' && !in_quotes) {
+                *p = '\0';
+                commands[command_count++] = start;
+                start = p + 1;
+            } else if (*p == '\0') {
+                commands[command_count++] = start;
+                break;
+            }
         }
+
 
         for (int i = 0; i < command_count; i++) {
             while (isspace(*commands[i])) commands[i]++;
             if (*commands[i] == '\0') {
-                fprintf(stderr, "Error de sintaxis: comando vac\u00edo entre pipes\n");
+                fprintf(stderr, "Error de sintaxis: comando vacio entre pipes\n");
                 command_count = 0;
                 break;
             }
