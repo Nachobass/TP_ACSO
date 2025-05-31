@@ -78,7 +78,7 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
             }
 
             if (strcmp(args[0], "exit") == 0) {
-                exit(0);  // No terminar el shell padre, solo el hijo
+                // exit(0);  // No terminar el shell padre, solo el hijo
             }
 
             if (execvp(args[0], args) == -1) {
@@ -98,6 +98,8 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
     }
 }
 
+
+// ================== MAIN ==================
 int main() {
     char command[256];
     char *commands[MAX_COMMANDS];
@@ -169,4 +171,3 @@ int main() {
 
     return 0;
 }
-
