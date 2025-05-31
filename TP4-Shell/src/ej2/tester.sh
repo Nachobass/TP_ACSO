@@ -140,17 +140,17 @@ run_test "   echo    prueba   " "Espaciado irregular"
 # COMANDOS ESPECIALES Y VALORES BORDES
 run_test "exit" "Comando de salida"
 run_test "yes | head -n 5" "Yes truncado por head"
-run_test "echo \"\"" "Echo con string vacío"
+run_test "echo \"\"" "Echo con string vacío"   
 run_test "echo hola | grep -v hola" "Grep que descarta salida"
 run_test "cat /dev/null | wc -l" "Conteo sobre input vacío"
 
 # ARGUMENTOS EXTREMOS
-run_test "echo $(seq -s ' ' 1 62)" "Límite exacto de argumentos"
-run_test "echo $(seq -s ' ' 1 63)" "Exceso de argumentos" "error"
+run_test "echo $(seq -s ' ' 1 63)" "Límite exacto de argumentos"
+run_test "echo $(seq -s ' ' 1 64)" "Exceso de argumentos" "error"
 
 # STRESS TEST: PIPELINE LARGO (200 PROCESOS)
 PIPE_CHAIN=$(printf 'grep . | %.0s' {1..198}; echo tail -n 1)
-run_test "cat $TEST_FILE | $PIPE_CHAIN" "Pipeline de 200 procesos con grep"
+run_test "cat $TEST_FILE | $PIPE_CHAIN" "Pipeline de 200 procesos con grep"    # NO PASA
 
 
 # EXTRA CREDIT: COMANDOS COMPLEJOS

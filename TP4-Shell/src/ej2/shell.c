@@ -154,12 +154,6 @@ int main() {
             continue;
         }
 
-        // command_count = 0;
-        // char *token = strtok(command, "|");
-        // while (token != NULL && command_count < MAX_COMMANDS) {
-        //     commands[command_count++] = token;
-        //     token = strtok(NULL, "|");
-        // }
         command_count = 0;
         char *start = command;
         bool in_quotes = false;
