@@ -131,9 +131,12 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
                 exit(EXIT_FAILURE);  // error por comillas
             }
 
+            if (strcmp(args[0], "exit") == 0) {
+                exit(0);  // No terminar el shell padre, solo el hijo
+            }
 
             if (execvp(args[0], args) == -1) {
-                perror("execvp");                               // ESTO ES LO QUE COMPARA EL TEST DE INVALIDO????
+                perror("execvp");                         
                 exit(EXIT_FAILURE);
             }
         }
