@@ -99,6 +99,24 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
 }
 
 
+
+// ================== syntax error ==================
+int is_syntax_error(const char *line) {
+    int len = strlen(line);
+    if (len == 0 || line[0] == '|' || line[len - 1] == '|') return 1;
+
+    for (int i = 0; i < len - 1; ++i) {
+        if (line[i] == '|') {
+            int j = i + 1;
+            while (j < len && isspace((unsigned char)line[j])) j++;
+            if (j < len && line[j] == '|') return 1;
+        }
+    }
+    return 0;
+}
+
+
+
 // ================== MAIN ==================
 int main() {
     char command[256];
@@ -110,7 +128,6 @@ int main() {
         fflush(stdout);
 
         if (fgets(command, sizeof(command), stdin) == NULL) {
-            // printf("\n");
             break;
         }
 
@@ -119,15 +136,20 @@ int main() {
         if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
             break;
 
-        // Chequeos de sintaxis inválida antes de tokenizar
-        if (command[0] == '|' || command[strlen(command) - 1] == '|') {
-            fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
+        // // Chequeos de sintaxis inválida antes de tokenizar
+        // if (command[0] == '|' || command[strlen(command) - 1] == '|') {
+        //     fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
+        //     continue;
+        // }
+        // if (strstr(command, "||") != NULL) {
+        //     fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
+        //     continue;
+        // }
+        if (is_syntax_error(command)) {
+            fprintf(stderr, "Error de sintaxis\n");
             continue;
         }
-        if (strstr(command, "||") != NULL) {
-            fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
-            continue;
-        }
+
 
         command_count = 0;
         char *token = strtok(command, "|");
