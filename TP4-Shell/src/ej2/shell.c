@@ -105,54 +105,6 @@ int is_syntax_error(const char *line) {
 
 // ========================= EJECUCION CON PIPES =========================
 
-// void ejecutar_comandos_con_pipes(char *commands[], int count) {
-//     int pipes[MAX_COMMANDS - 1][2];
-//     pid_t pids[MAX_COMMANDS];
-
-//     for (int i = 0; i < count - 1; i++) {
-//         if (pipe(pipes[i]) == -1) {
-//             perror("pipe");
-//             exit(EXIT_FAILURE);
-//         }
-//     }
-
-//     for (int i = 0; i < count; i++) {
-//         pids[i] = fork();
-//         if (pids[i] == 0) {
-//             if (i > 0) dup2(pipes[i - 1][0], STDIN_FILENO);
-//             if (i < count - 1) dup2(pipes[i][1], STDOUT_FILENO);
-
-//             for (int j = 0; j < count - 1; j++) {
-//                 close(pipes[j][0]);
-//                 close(pipes[j][1]);
-//             }
-
-//             char *args[MAX_ARGS + 1];
-//             if (!parse_args_with_comillas(commands[i], args)) {
-//                 exit(EXIT_FAILURE);
-//             }
-
-//             if (strcmp(args[0], "exit") == 0) {
-//                 exit(0);
-//             }
-
-//             if (execvp(args[0], args) == -1) {
-//                 perror("execvp");
-//                 exit(EXIT_FAILURE);
-//             }
-//         }
-//     }
-
-//     for (int i = 0; i < count - 1; i++) {
-//         close(pipes[i][0]);
-//         close(pipes[i][1]);
-//     }
-
-//     for (int i = 0; i < count; i++) {
-//         waitpid(pids[i], NULL, 0);
-//     }
-// }
-
 void ejecutar_comandos_con_pipes(char *commands[], int count) {
     int pipes[MAX_COMMANDS - 1][2];
     pid_t pids[MAX_COMMANDS];
@@ -166,22 +118,10 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
 
     for (int i = 0; i < count; i++) {
         pids[i] = fork();
-        if (pids[i] == -1) {
-            perror("fork");
-            exit(EXIT_FAILURE);
-        }
-
         if (pids[i] == 0) {
-            // Redireccionar entrada
-            if (i > 0) {
-                dup2(pipes[i - 1][0], STDIN_FILENO);
-            }
-            // Redireccionar salida
-            if (i < count - 1) {
-                dup2(pipes[i][1], STDOUT_FILENO);
-            }
+            if (i > 0) dup2(pipes[i - 1][0], STDIN_FILENO);
+            if (i < count - 1) dup2(pipes[i][1], STDOUT_FILENO);
 
-            // Cerrar todos los extremos de pipes en el hijo
             for (int j = 0; j < count - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
@@ -196,23 +136,83 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
                 exit(0);
             }
 
-            execvp(args[0], args);
-            perror("execvp");
-            exit(EXIT_FAILURE);
-        }
-
-        // PADRE: cerrar extremos de pipe que ya no necesita
-        if (i > 0) {
-            close(pipes[i - 1][0]);
-            close(pipes[i - 1][1]);
+            if (execvp(args[0], args) == -1) {
+                perror("execvp");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
-    // El padre espera a todos los hijos
+    for (int i = 0; i < count - 1; i++) {
+        close(pipes[i][0]);
+        close(pipes[i][1]);
+    }
+
     for (int i = 0; i < count; i++) {
         waitpid(pids[i], NULL, 0);
     }
 }
+
+// void ejecutar_comandos_con_pipes(char *commands[], int count) {
+//     int pipes[MAX_COMMANDS - 1][2];
+//     pid_t pids[MAX_COMMANDS];
+
+//     for (int i = 0; i < count - 1; i++) {
+//         if (pipe(pipes[i]) == -1) {
+//             perror("pipe");
+//             exit(EXIT_FAILURE);
+//         }
+//     }
+
+//     for (int i = 0; i < count; i++) {
+//         pids[i] = fork();
+//         if (pids[i] == -1) {
+//             perror("fork");
+//             exit(EXIT_FAILURE);
+//         }
+
+//         if (pids[i] == 0) {
+//             // Redireccionar entrada
+//             if (i > 0) {
+//                 dup2(pipes[i - 1][0], STDIN_FILENO);
+//             }
+//             // Redireccionar salida
+//             if (i < count - 1) {
+//                 dup2(pipes[i][1], STDOUT_FILENO);
+//             }
+
+//             // Cerrar todos los extremos de pipes en el hijo
+//             for (int j = 0; j < count - 1; j++) {
+//                 close(pipes[j][0]);
+//                 close(pipes[j][1]);
+//             }
+
+//             char *args[MAX_ARGS + 1];
+//             if (!parse_args_with_comillas(commands[i], args)) {
+//                 exit(EXIT_FAILURE);
+//             }
+
+//             if (strcmp(args[0], "exit") == 0) {
+//                 exit(0);
+//             }
+
+//             execvp(args[0], args);
+//             perror("execvp");
+//             exit(EXIT_FAILURE);
+//         }
+
+//         // PADRE: cerrar extremos de pipe que ya no necesita
+//         if (i > 0) {
+//             close(pipes[i - 1][0]);
+//             close(pipes[i - 1][1]);
+//         }
+//     }
+
+//     // El padre espera a todos los hijos
+//     for (int i = 0; i < count; i++) {
+//         waitpid(pids[i], NULL, 0);
+//     }
+// }
 
 
 // ========================= MAIN =========================
