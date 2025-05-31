@@ -131,9 +131,15 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
                 exit(EXIT_FAILURE);  // error por comillas
             }
 
+            // if (strcmp(args[0], "exit") == 0) {
+            //     exit(0);  // No terminar el shell padre, solo el hijo
+            // }
             if (strcmp(args[0], "exit") == 0) {
-                exit(0);  // No terminar el shell padre, solo el hijo
+                // Cierra stdout explícitamente para que wc reciba EOF correctamente
+                close(STDOUT_FILENO);
+                exit(0);
             }
+
 
             if (execvp(args[0], args) == -1) {
                 perror("execvp");                         
