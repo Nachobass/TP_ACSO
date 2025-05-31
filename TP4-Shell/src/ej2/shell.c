@@ -6,12 +6,12 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-#define MAX_COMMANDS 200
+#define MAX_COMMANDS 256
 
 // === NUEVO: parser que respeta comillas ===
 #define MAX_ARGS 63
 
-bool parse_args_con_comillas(char *input, char *args[]) {
+bool parse_args_with_comillas(char *input, char *args[]) {
     int i = 0;
     while (*input) {
         while (isspace(*input)) input++;
@@ -72,8 +72,8 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
             }
 
             char *args[64];
-            // parse_args_con_comillas(commands[i], args);  // usar parser que respeta comillas
-            if (!parse_args_con_comillas(commands[i], args)) {
+            // parse_args_with_comillas(commands[i], args);  // usar parser que respeta comillas
+            if (!parse_args_with_comillas(commands[i], args)) {
                 exit(EXIT_FAILURE);  // error por comillas
             }
 
@@ -118,6 +118,84 @@ int is_syntax_error(const char *line) {
 
 
 // ================== MAIN ==================
+// int main() {
+//     char command[256];
+//     char *commands[MAX_COMMANDS];
+//     int command_count;
+
+//     while (1) {
+//         printf("Shell> ");
+//         fflush(stdout);
+
+//         if (fgets(command, sizeof(command), stdin) == NULL) {
+//             break;
+//         }
+
+//         command[strcspn(command, "\n")] = '\0';
+
+//         if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
+//             break;
+
+//         // // Chequeos de sintaxis inválida antes de tokenizar
+//         // if (command[0] == '|' || command[strlen(command) - 1] == '|') {
+//         //     fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
+//         //     continue;
+//         // }
+//         // if (strstr(command, "||") != NULL) {
+//         //     fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
+//         //     continue;
+//         // }
+//         if (is_syntax_error(command)) {
+//             fprintf(stderr, "Error de sintaxis\n");
+//             continue;
+//         }
+
+
+//         command_count = 0;
+//         char *token = strtok(command, "|");
+//         while (token != NULL && command_count < MAX_COMMANDS) {
+//             commands[command_count++] = token;
+//             token = strtok(NULL, "|");
+//         }
+
+//         if (strncmp(command, "cd", 2) == 0) {
+//             char *path = command + 2;
+//             while (isspace(*path)) path++;
+
+//             if (*path == '\0') {
+//                 path = getenv("HOME");
+//             }
+
+//             if (chdir(path) != 0) {
+//                 perror("cd");
+//             }
+//             continue;
+//         }
+
+//         bool sintaxis_invalida = false;
+
+//         for (int i = 0; i < command_count; i++) {
+//             // Saltar espacios
+//             while (isspace(*commands[i])) commands[i]++;
+//             if (*commands[i] == '\0') {
+//                 sintaxis_invalida = true;
+//                 break;
+//             }
+//         }
+
+//         if (sintaxis_invalida) {
+//             fprintf(stderr, "Error de sintaxis: comando vacío entre pipes\n");
+//             continue;
+//         }
+
+//         ejecutar_comandos_con_pipes(commands, command_count);
+//     }
+
+//     return 0;
+// }
+
+
+
 int main() {
     char command[256];
     char *commands[MAX_COMMANDS];
@@ -136,15 +214,6 @@ int main() {
         if (strcmp(command, "exit") == 0 || strcmp(command, "q") == 0)
             break;
 
-        // // Chequeos de sintaxis inválida antes de tokenizar
-        // if (command[0] == '|' || command[strlen(command) - 1] == '|') {
-        //     fprintf(stderr, "Error de sintaxis: pipe al inicio o al final\n");
-        //     continue;
-        // }
-        // if (strstr(command, "||") != NULL) {
-        //     fprintf(stderr, "Error de sintaxis: pipes consecutivos\n");
-        //     continue;
-        // }
         if (is_syntax_error(command)) {
             fprintf(stderr, "Error de sintaxis\n");
             continue;
@@ -193,6 +262,10 @@ int main() {
 
     return 0;
 }
+
+
+
+
 
 
 
