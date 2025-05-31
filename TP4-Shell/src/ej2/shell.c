@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #define MAX_COMMANDS 200
-#define MAX_ARGS 63
+#define MAX_ARGS 64
 #define CMD_BUF_SIZE 4096
 
 // ========================= PARSER CON COMILLAS Y VALIDACIONES =========================
