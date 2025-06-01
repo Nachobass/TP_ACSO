@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CONFIGURACIÓN
+# CONFIGURACION
 TEST_FILE="test.txt"
 TEMP_OUT=$(mktemp)
 EXPECTED_OUT=$(mktemp)
@@ -21,7 +21,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# COMPILACIÓN
+# COMPILACION
 echo -e "${BLUE}⚙️  Compilando shell...${NC}"
 make -s
 if [ ! -f ./shell ]; then
@@ -36,7 +36,7 @@ documento.zip
 imagen.jpg
 EOF
 
-# FUNCIÓN PRINCIPAL DE TEST
+# FUNCION PRINCIPAL DE TEST
 run_test() {
     local input="$1"
     local description="$2"
@@ -104,7 +104,7 @@ run_test() {
     echo ""
 }
 
-# TESTS FUNCIONALES BÁSICOS
+# TESTS FUNCIONALES BASICOS
 run_test "echo hola" "Echo simple"
 run_test "echo \"hola mundo\"" "Echo con comillas dobles"
 run_test "echo hola    mundo | wc -w" "Espacios múltiples y pipe"
@@ -120,7 +120,7 @@ run_test "/bin/echo hola" "Comando con ruta absoluta"
 run_test "ls | sort | uniq" "" "Pipeline real sin wc (validez estructural)"
 run_test $'echo\t\thola' "hola" "Tabulaciones entre palabras"
 
-# ERRORES DE SINTAXIS (estos deberían producir errores)
+# ERRORES DE SINTAXIS (estos deberian producir errores)
 run_test "| echo hola" "Pipe al inicio" "error"
 run_test "echo hola |" "Pipe al final" "error"
 run_test "echo hola || wc" "Pipe doble" "error"
@@ -132,7 +132,7 @@ run_test "| | hola |" "Comando entre pipes vacíos" "error"
 # CASO ESPECIAL: COMANDO EXIT DENTRO DE PIPE
 run_test "exit | wc" "" "Exit dentro de pipeline"
 
-# ERRORES DE PARSING Y COMANDOS INVÁLIDOS
+# ERRORES DE PARSING Y COMANDOS INVALIDOS
 run_test "inexistentecomando" "Comando inexistente" "error"
 run_test "echo \"hola" "Comillas abiertas sin cerrar" "error"
 run_test "   echo    prueba   " "Espaciado irregular"

@@ -15,23 +15,23 @@
 
 
 
-
-// ========================= SETUP SIGNALS =========================
+// ========================= setup senales =========================
 
 void setup_signals() {
     struct sigaction sa;
 
-    // Ignorar Ctrl+C (SIGINT) en el shell principal
+    // ignoro ctrl c (SIGINT) en el shell principal
     memset( &sa, 0, sizeof(sa) );
     sa.sa_handler = SIG_IGN;
     sigaction( SIGINT, &sa, NULL );
 
-    // Ignorar Ctrl+Z (SIGTSTP)
+    // ignoro ctrl z (SIGTSTP)
     sigaction( SIGTSTP, &sa, NULL );
 }
 
 
-// ========================= PARSER CON COMILAS Y VALIDACIONES =========================
+
+// ========================= parser con comillas y validaciones =========================
 
 bool parse_args_with_comillas(char *input, char *args[]) {
     int i = 0;
@@ -79,7 +79,7 @@ int count_quotes(const char *line) {
 
 int is_syntax_error(const char *line) {
     int len = strlen(line);
-    if( len == 0 || line[0] == '|' || line[len - 1] == '|' ) return 1;
+    if(len == 0 || line[0] == '|' || line[len - 1] == '|' ) return 1;
 
     for( int i = 0; i < len - 1; ++i ){
         if( line[i] == '|' ){
@@ -91,9 +91,9 @@ int is_syntax_error(const char *line) {
     return 0;
 }
 
-// ========================= EJECUCION CON PIPES =========================
+// ========================= ejecuto con pipes =========================
 
-void ejecutar_comandos_con_pipes(char *commands[], int count) {
+void execute_commands_wit_pipes(char *commands[], int count) {
     int pipes[MAX_COMMANDS - 1][2];
     pid_t pids[MAX_COMMANDS];
 
@@ -104,7 +104,7 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
         }
     }
 
-    for( int i = 0; i < count; i++ ){
+    for( int i = 0; i < count; i++){
         pids[i] = fork();
         if( pids[i] == 0 ){
             if( i > 0 ) dup2(pipes[i - 1][0], STDIN_FILENO);
@@ -142,7 +142,8 @@ void ejecutar_comandos_con_pipes(char *commands[], int count) {
 }
 
 
-// ========================= MAIN =========================
+
+// ========================= main =========================
 
 int main() {
     char command[CMD_BUF_SIZE];
@@ -156,7 +157,7 @@ int main() {
     }
 
     while( 1 ){
-        if( isatty(STDIN_FILENO) ){
+        if( isatty(STDIN_FILENO)){
             printf("Shell> ");
             fflush(stdout);
         }
@@ -209,7 +210,7 @@ int main() {
 
         if( command_count == 0 ) continue;
 
-        // Comando interno: cd
+        // cd
         if( strncmp(commands[0], "cd", 2) == 0 ){
             char *path = commands[0] + 2;
             while( isspace(*path) ) path++;
@@ -222,7 +223,7 @@ int main() {
             continue;
         }
 
-        ejecutar_comandos_con_pipes(commands, command_count);
+        execute_commands_wit_pipes(commands, command_count);
     }
 
     if( isatty(STDIN_FILENO) ){
