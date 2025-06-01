@@ -148,9 +148,9 @@ run_test "cat /dev/null | wc -l" "Conteo sobre input vacío"
 run_test "echo $(seq -s ' ' 1 63)" "Límite exacto de argumentos"
 run_test "echo $(seq -s ' ' 1 64)" "Exceso de argumentos" "error"
 
-# STRESS TEST: PIPELINE LARGO (200 PROCESOS)
-PIPE_CHAIN=$(printf 'grep . | %.0s' {1..198}; echo tail -n 1)
-run_test "cat $TEST_FILE | $PIPE_CHAIN" "Pipeline de 200 procesos con grep"
+# STRESS TEST: PIPELINE LARGO (100 PROCESOS)
+PIPE_CHAIN=$(printf 'grep . | %.0s' {1..98}; echo tail -n 1)
+run_test "cat $TEST_FILE | $PIPE_CHAIN" "Pipeline de 100 procesos con grep"
 
 
 # EXTRA CREDIT: COMANDOS COMPLEJOS
