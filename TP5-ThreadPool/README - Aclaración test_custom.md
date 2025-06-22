@@ -1,6 +1,6 @@
 **ACLARACIÓN:**
 
-Si quieren correr el test_custom tienen que modificar el Make file y usar este:
+Si quieren correr el test_custom.cc tienen que modificar se tiene que modificar el Makefile de la siguiente forma:
 
 
 
