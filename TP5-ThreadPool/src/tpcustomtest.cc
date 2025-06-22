@@ -45,6 +45,8 @@ static void simpleTest() {
   }
 
   pool.wait();
+
+cout << "[Test --simple-test completed ✅]" << endl;
 }
 
 
@@ -57,6 +59,7 @@ static void singleThreadNoWaitTest() {
         oslock.unlock();
     });
     sleep_for(1000); // emulate wait without actually calling wait (that's a different test)
+    cout << "[Test --single-thread-no-wait completed ✅]" << endl;
 }
 
 static void singleThreadSingleWaitTest() {
@@ -67,12 +70,14 @@ static void singleThreadSingleWaitTest() {
         oslock.unlock();
         sleep_for(1000);
     });
+    cout << "[Test --single-thread-single-wait completed ✅]" << endl;
 }
 
 static void noThreadsDoubleWaitTest() {
     ThreadPool pool(4);
     pool.wait();
     pool.wait();
+    cout << "[Test --no-threads-double-wait completed ✅]" << endl;
 }
 
 static void reuseThreadPoolTest() {
@@ -93,6 +98,7 @@ static void reuseThreadPoolTest() {
         sleep_for(1000);
     }); 
     pool.wait();
+    cout << "[Test --reuse-thread-pool completed ✅]" << endl;
 }
 
 struct testEntry {
